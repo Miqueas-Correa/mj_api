@@ -1,0 +1,5 @@
+notas.txt
+\__pycache__
+\.venv
+\controlador\__pycache__
+\modelo\__pycache__
