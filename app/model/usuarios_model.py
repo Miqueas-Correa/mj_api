@@ -4,6 +4,7 @@ def getUsuario(nombre_apellido: str):
             return usuario
     return None
 
+# get all usuarios: retorna todos los usuarios de la base de datos
 def getUsuarios():
     return usuarios_db
 

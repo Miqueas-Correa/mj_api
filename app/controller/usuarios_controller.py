@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request
+from mj_api.app.controller.validate.usuarios_validate import validate_usuario_input
+from mj_api.app.model.dto.UsuarioDto import UsuarioDTO
 from model.usuarios_model import crear_usuario, obtener_usuario_por_id, getUsuarios,editar_usuario_por_id, eliminar_usuario_por_id
 
 # Creamos el blueprint
@@ -9,20 +11,29 @@ usuarios_bp = Blueprint('usuarios', __name__)
 def getUsuariosJson():
     return jsonify(getUsuarios())
 
+# !get usuario por id
+
 # crear usuario
 @usuarios_bp.route('/usuarios/', methods=["POST"])
 def crear_usuario_json():
     if not request.is_json:
         return jsonify({"error":"El formato de la solicitud no es JSON"}),400
 
-    if "nombre" in request.json and "contrasenia" in request.json:
-        return jsonify({"error":"Faltan datos"}),400
-
-    # usuario = json.loads(request.data)
-    # es lo mismo que
     usuario = request.get_json()
-    usuarioNuevo = crear_usuario(usuario["nombre"], usuario["contrasenia"])
-    return jsonify(usuarioNuevo),200
+    # llamo al validate
+    errors = validate_usuario_input(usuario)
+    if errors:
+        return errors
+
+    # Si no hubo errores, crear usuario
+    usuarioDto = UsuarioDTO.from_model(usuario)
+
+    # Guardo en la base de datos
+    saved_usuario = crear_usuario(usuarioDto)
+    if not saved_usuario:
+        return jsonify({"error":"Error al registrar el usuario"}),500
+
+    return jsonify({"mensaje": "Usuario registrado con éxito"}, saved_usuario), 201
 
 @usuarios_bp.route('/usuarios/<int:id_usuario>', methods=["GET"])
 def obtener_usuario_por_id_json(id_usuario):
