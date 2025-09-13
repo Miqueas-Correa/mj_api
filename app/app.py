@@ -1,19 +1,18 @@
 from flask import Flask
-from flask_mysqldb import MySQL #importamos la clase MySQL
-from controller.usuarios_controller import usuarios_bp #importamos el blueprint de usuarios
+from model.usuarios_model import db
+from controller.usuarios_controller import usuarios_bp
+from config import Config
 
-app = Flask(__name__) #creamos una instancia de la clase Flask
+app = Flask(__name__)
 
-# conexion a la base de datos
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'Miqueas1'
-app.config['MYSQL_DB'] = 'proyecto_mj'
+# Cargar configuración desde config.py
+app.config.from_object(Config)
 
-conexion = MySQL(app) #creamos una instancia de la clase MySQL
+# Inicializar la DB
+db.init_app(app)
 
-# # registramos el blueprint
+# Registrar rutas
 app.register_blueprint(usuarios_bp)
 
-if __name__ == '__main__':
-    app.run(debug=True) #iniciamos la aplicación
+if __name__ == "__main__":
+    app.run(debug=app.config["DEBUG"])

@@ -3,3 +3,4 @@ notas.txt
 \.venv
 \controlador\__pycache__
 \modelo\__pycache__
+.env

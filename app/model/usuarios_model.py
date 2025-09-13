@@ -1,47 +1,15 @@
-def getUsuario(nombre_apellido: str):
-    for usuario in usuarios_db:
-        if usuario.nombre_apellido == nombre_apellido:
-            return usuario
-    return None
+from flask_sqlalchemy import SQLAlchemy
 
-# get all usuarios: retorna todos los usuarios de la base de datos
-def getUsuarios():
-    return usuarios_db
+db = SQLAlchemy()
 
-def getUsuarioId(id: int):
-    for usuario in usuarios_db:
-        if usuario.id == id:
-            return usuario
-    return None
+# Definición del modelo de Usuario
+class Usuario(db.Model):
+    __tablename__ = "usuarios"
 
-def login(nombre_apellido: str, telefono: str, email: str, contraseña: str):
-    for usuario in usuarios_db:
-        if (usuario.nombre_apellido == nombre_apellido and
-            usuario.telefono == telefono and
-            usuario.email == email and
-            usuario.contraseña == contraseña):
-            return usuario
-    return None
-
-def deleteUsuario(id: int):
-    global usuarios_db
-    for i, usuario in enumerate(usuarios_db):
-        if usuario.id == id:
-            del usuarios_db[i]
-            admin_ids.discard(id)
-            return True
-    return False
-
-def asignarAdmin(id: int):
-    usuario = getUsuarioId(id)
-    if usuario:
-        usuario.es_admin = True
-        admin_ids.add(id)
-        return True
-    return False
-
-def inicioSecion(email: str, contraseña: str):
-    for usuario in usuarios_db:
-        if usuario.email == email and usuario.contraseña == contraseña:
-            return usuario
-    return None
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    contrasenia = db.Column(db.String(200), nullable=False)  # cifrada
+    telefono = db.Column(db.String(20), nullable=False)
+    activo = db.Column(db.Boolean, default=True)
+    rol = db.Column(db.Enum("cliente", "admin"), nullable=False)
