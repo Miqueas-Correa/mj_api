@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from pydantic import ValidationError
 from model.usuarios_model import db, Usuario
-from mj_api.app.model.dto.UsuarioDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
+from model.dto.UsuarioDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
