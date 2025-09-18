@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from pydantic import ValidationError
-from model.usuarios_model import db, Usuario
+from model.usuarios_model import db_usuarios, Usuario
 from model.dto.UsuarioDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
 
 usuarios_bp = Blueprint("usuarios", __name__)
@@ -13,6 +13,8 @@ def listar_usuarios():
     # .all() ejecuta la consulta SELECT * FROM usuarios y devuelve una lista de instancias del modelo Usuario.
     # Tipo devuelto: List[Usuario] (cada elemento es un objeto con atributos como id, nombre, email, contrasenia, telefono, activo, rol).
     usuarios = Usuario.query.all()
+    # muestro la lista de usuarios en consola para verificar que funciona
+    print(usuarios)
     # filtro los datos sensibles (contrasenia) y convierto a dict
     dto_list = [UsuarioSalidaDTO.from_model(u).__dict__ for u in usuarios]
     return jsonify(dto_list), 200
@@ -38,8 +40,8 @@ def crear_usuario():
         rol=dto.rol
     )
 
-    db.session.add(nuevo_usuario)
-    db.session.commit()
+    db_usuarios.session.add(nuevo_usuario)
+    db_usuarios.session.commit()
 
     return jsonify({"message": "Usuario creado exitosamente"}), 201
 
