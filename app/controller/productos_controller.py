@@ -1,15 +1,16 @@
 from flask import Blueprint, request, jsonify
-from model.productos_model import db_productos, Producto
+from model.dto.ProductosDTO import ProductoSalidaDTO
+from model.productos_model import db, Producto
 # from model.dto.PedidosDTO import 
 
-db_productos = Blueprint("producto", __name__)
+productos_bp = Blueprint("productos", __name__)
 
 # Listar Producto
-@db_productos.route("/producto", methods=["GET"])
+@productos_bp.route("/productos", methods=["GET"])
 def listar_productos():
-    # muestro la lista de productos en consola para verificar que funciona
-    print(Producto.query.all())
+    productos = Producto.query.all()
+    print(productos)
     # .query es el acceso al constructor de consultas de SQLAlchemy (Query object).
     # .all() ejecuta la consulta SELECT * FROM pedidos y devuelve una lista de instancias del modelo Producto.
     # Tipo devuelto: (cada elemento es un objeto con atributos como id, id_usuario, codigo_producto, total, fecha, cerrado).
-    return jsonify(Producto.query.all()), 200
+    return jsonify([ProductoSalidaDTO.from_model(p).__dict__ for p in productos]), 200

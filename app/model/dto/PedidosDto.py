@@ -1,9 +1,16 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Annotated, Optional
+
+from pydantic import BaseModel, Field
+
+class PedidosEntradaDTO(BaseModel):
+    id_usuario: Annotated[int, Field(ge=1)]
+    codigo_producto: Annotated[int, Field(ge=1)]
+    total: Annotated[float, Field(gt=0)]
 
 @dataclass
-class PedidoDTO:
-    id: Optional[int]
+class PedidoSalidaDTO:
+    id: int
     id_usuario: int
     codigo_producto: int
     total: float
