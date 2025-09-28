@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash
 from pydantic import ValidationError
+from service.usuarios_service import usuario_nuevo
 from model.usuarios_model import db, Usuario
 from model.dto.UsuarioDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
 
@@ -24,22 +24,15 @@ def listar_usuarios():
 # Crear usuario
 @usuarios_bp.route("/usuarios", methods=["POST"])
 def crear_usuario():
+    if not request.is_json: return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
     try:
-        dto = UsuarioEntradaDTO(**request.json)
+        # valido y creo el usuario
+        db.session.add(usuario_nuevo(UsuarioEntradaDTO(**request.json))) # prepara la insercion
+        db.session.commit() # ejecuta la insercion en la base de datos
     except ValidationError as e:
         return jsonify({"errors": e.errors()}), 400
-
-    nuevo_usuario = Usuario(
-        nombre=dto.nombre,
-        email=dto.email,
-        telefono=dto.telefono,
-        contrasenia=generate_password_hash(dto.contrasenia),
-        activo=dto.activo,
-        rol=dto.rol
-    )
-
-    db.session.add(nuevo_usuario)
-    db.session.commit()
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
 
     return jsonify({"message": "Usuario creado exitosamente"}), 201
 
