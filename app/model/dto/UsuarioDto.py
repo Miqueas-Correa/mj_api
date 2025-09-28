@@ -1,16 +1,43 @@
 from dataclasses import dataclass
 from typing import Annotated
-from pydantic import BaseModel, EmailStr, Field
+import phonenumbers
+from phonenumbers import PhoneNumberFormat, PhoneNumberType
+from pydantic import BaseModel, EmailStr, Field, validator
 from model.usuarios_model import Usuario
 
 # DTO de ENTRADA
 class UsuarioEntradaDTO(BaseModel):
     nombre: Annotated[str, Field(min_length=2, max_length=50)]
     email: EmailStr
-    telefono: Annotated[str, Field(pattern=r"^\+?\d[\d\s\-]{7,19}$")]
+    telefono: str
     contrasenia: Annotated[str, Field(min_length=6, max_length=100)]
-    activo: bool = True
-    rol: Annotated[str, Field(pattern="^(cliente|admin)$")]
+    # activo: bool = True
+    # rol: Annotated[str, Field(pattern="^(cliente|admin)$")]
+
+    @validator("telefono")
+    def validar_telefono(cls, v):
+        return validar_telefono_ar(v)
+
+# validacion telefono
+def validar_telefono_ar(valor: str) -> str:
+    # Si no empieza con +54, se lo agregamos
+    if not valor.startswith("+54"):
+        valor = "+549" + valor.lstrip("0")  # quita un 0 inicial si lo hubiera
+
+    try:
+        parsed = phonenumbers.parse(valor, "AR") # AR es el código de país para Argentina
+    except phonenumbers.NumberParseException:
+        raise ValueError("Número de teléfono inválido")
+
+    if not phonenumbers.is_valid_number(parsed):
+        raise ValueError("Número de teléfono inválido")
+
+    # exigir que sea celular
+    if phonenumbers.number_type(parsed) not in (PhoneNumberType.MOBILE,
+                                                PhoneNumberType.FIXED_LINE_OR_MOBILE):
+        raise ValueError("Se requiere un número de teléfono móvil")
+
+    return phonenumbers.format_number(parsed, PhoneNumberFormat.E164)
 
 # DTO de SALIDA (evitamos devolver contrasenia)
 @dataclass
