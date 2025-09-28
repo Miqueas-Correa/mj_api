@@ -10,7 +10,7 @@ class Usuario(db.Model):
     contrasenia = db.Column(db.String(512), nullable=False)  # cifrada
     telefono = db.Column(db.String(20), nullable=False)
     activo = db.Column(db.Boolean, default=True)
-    rol = db.Column(db.Enum("cliente", "admin"), nullable=False)
+    rol = db.Column(db.Enum("cliente", "admin"), nullable=False, default="cliente")
 
     # Relación con pedidos (uno a muchos)
     pedidos = db.relationship("Pedido", back_populates="usuario", lazy="select")
