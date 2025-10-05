@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Optional
 import phonenumbers
 from phonenumbers import PhoneNumberFormat, PhoneNumberType
 from pydantic import BaseModel, EmailStr, Field, validator
@@ -59,3 +59,10 @@ class UsuarioSalidaDTO:
             activo=usuario.activo,
             rol=usuario.rol
         )
+
+# DTO para modificar usuario
+class UsuarioUpdateDTO(BaseModel):
+    nombre: Optional[str] = Field(None, min_length=2, max_length=50)
+    email: Optional[EmailStr]
+    telefono: Optional[str] = Field(None, pattern=r"^\+?\d[\d\s\-]{7,19}$")
+    contrasenia: Optional[str] = Field(None, min_length=6, max_length=100)
