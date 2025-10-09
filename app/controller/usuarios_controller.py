@@ -1,25 +1,38 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from service.usuarios_service import usuario_nuevo
-from model.usuarios_model import db, Usuario
-from model.dto.UsuarioDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
+from service.usuarios_service import check_password, eliminar_usuario_service, listar_usuarios_service, obtener_usuario, usuario_nuevo, editar_usuario
+from model.usuarios_model import Usuario
+from model.dto.UsuarioDTO import UsuarioEntradaDTO, UsuarioSalidaDTO, UsuarioUpdateDTO
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
-# Listar usuarios
+# Listar todos los usuarios
 @usuarios_bp.route("/usuarios", methods=["GET"])
 def listar_usuarios():
-    # .query es el acceso al constructor de consultas de SQLAlchemy (Query object).
-    # .all() ejecuta la consulta SELECT * FROM usuarios y devuelve una lista de instancias del modelo Usuario.
-    # Tipo devuelto: List[Usuario] (cada elemento es un objeto con atributos como id, nombre, email, contrasenia, telefono, activo, rol).
-    usuarios = Usuario.query.all()
-    print(usuarios)
-    # filtro los datos sensibles (contrasenia) y convierto a dict
-    return jsonify([UsuarioSalidaDTO.from_model(u).__dict__ for u in usuarios]), 200
+    try:
+        L_activos = request.args.get("activos", default=None, type=str)
+        # filtro los datos sensibles (contrasenia) y convierto a dict
+        return jsonify(listar_usuarios_service(L_activos)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
+# buscar usuario por nombre
+@usuarios_bp.route("/usuarios/<string:nombre>", methods=["GET"])
+def obtener_usuario_por_nombre(nombre):
+    try:
+        L_activos = request.args.get("activos", default=None, type=str)
+        return jsonify(obtener_usuario(False, nombre, L_activos)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
 
-# !get usuario por query params
-# @usuarios_bp.route("/usuarios/buscar", methods=["GET"])
+# buscar usuario por id
+@usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
+def obtener_usuario_por_id(id):
+    try:
+        L_activos = request.args.get("activos", default=None, type=str)
+        return jsonify(obtener_usuario(True, id, L_activos)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
 
 # Crear usuario
 @usuarios_bp.route("/usuarios", methods=["POST"])
@@ -27,27 +40,59 @@ def crear_usuario():
     if not request.is_json: return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
     try:
         # valido y creo el usuario
-        db.session.add(usuario_nuevo(UsuarioEntradaDTO(**request.json))) # prepara la insercion
-        db.session.commit() # ejecuta la insercion en la base de datos
+        usuario_nuevo(UsuarioEntradaDTO(**request.json))
+        return jsonify({"message": "Usuario creado exitosamente"}), 201
     except ValidationError as e:
         return jsonify({"errors": e.errors()}), 400
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
 
-    return jsonify({"message": "Usuario creado exitosamente"}), 201
+# comprobar contraseña nombre
+@usuarios_bp.route("/usuarios/comprobar/<string:nombre>", methods=["POST"])
+def comprobar_contrasenia(nombre):
+    if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
 
-# @usuarios_bp.route('/usuarios/<int:id_usuario>', methods=["PUT"])
-# def modificar_usuario_json(id_usuario):
-#     if request.is_json:
-#         if "nombre_de_usuario" in request.json and "contraseña" in request.json:
-#             usuario = request.get_json()
-#             usuario_modificado=editar_usuario_por_id(id_usuario,usuario["nombre_de_usuario"], usuario["contraseña"])
-#             return jsonify(usuario_modificado),200
-#         else:
-#             return jsonify({"error":"Faltan datos"}),400
-#     else:
-#         return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-    
-# @usuarios_bp.route('/usuarios/<int:id_usuario>', methods=["DELETE"])
-# def eliminar_usuario_json(id_usuario):
-#     return jsonify(eliminar_usuario_por_id(id_usuario)),200
+    try:
+        # valido y compruebo la contraseña
+        contrasenia = request.json.get("contrasenia") if "contrasenia" in request.json else None
+        if contrasenia is None: return jsonify({"error":"Faltan datos"}),400
+        check_password(nombre, contrasenia, by_id=False)
+        return jsonify({"message": "Contraseña correcta"}), 200
+    except ValueError as e:
+        return jsonify({"errors": str(e)}), 400
+
+# comprobar contraseña id
+@usuarios_bp.route("/usuarios/comprobar/<int:id>", methods=["POST"])
+def comprobar_contrasenia_id(id):
+    if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
+
+    try:
+        # valido y compruebo la contraseña
+        contrasenia = request.json.get("contrasenia") if "contrasenia" in request.json else None
+        if contrasenia is None: return jsonify({"error":"Faltan datos"}),400
+        check_password(id, contrasenia, by_id=True)
+        return jsonify({"message": "Contraseña correcta"}), 200
+    except ValueError as e:
+        return jsonify({"errors": str(e)}), 400
+
+# Modificar usuario, este metodo permite cambiar los datos de un usuario existente. antes
+# de utilizarlo se supone que se comprobo la contraseña
+@usuarios_bp.route('/usuarios/<int:id>', methods=["PUT"])
+def modificar_usuario(id):
+    if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
+
+    try:
+        # reviso si el usuario existe y si la contraseña es correcta
+        editar_usuario(id, UsuarioUpdateDTO(**request.json))
+        return jsonify({"message":"Usuario modificado exitosamente"}),200
+    except ValueError as e:
+        return jsonify({"error": e.errors()}),404
+
+# Eliminar usuario (cambiar su estado a inactivo)
+@usuarios_bp.route('/usuarios/<int:id>', methods=["DELETE"])
+def eliminar_usuario_json(id):
+    return jsonify(eliminar_usuario_service(id)),200
+
+@usuarios_bp.route("/usuarios/<string:nombre>", methods=["DELETE"])
+def eliminar_usuario_nombre(nombre):
+    return jsonify(eliminar_usuario_service(nombre, by_id=False)),200
