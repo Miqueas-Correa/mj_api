@@ -1,4 +1,4 @@
-from app.model.dto.UsuarioDTO import UsuarioSalidaDTO
+from model.dto.UsuarioDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, UsuarioUpdateDTO
 from model.usuarios_model import Usuario
 from werkzeug.security import generate_password_hash, check_password_hash
 from model.usuarios_model import db
@@ -20,8 +20,10 @@ def listar_usuarios_service(L_activos):
 def obtener_usuario(by_id, valor, L_activos):
     if by_id:
         usuario = Usuario.query.get(valor)
+        if not usuario: raise ValueError("Usuario no encontrado")
     else:
         usuario = Usuario.query.filter_by(nombre=valor).first()
+        if not usuario: raise ValueError("Usuario no encontrado")
     if L_activos is not None:
         if L_activos.lower() == 'true' and (not usuario or not usuario.activo):
             raise ValueError("Usuario no encontrado")
@@ -32,7 +34,8 @@ def obtener_usuario(by_id, valor, L_activos):
     return UsuarioSalidaDTO.from_model(usuario).__dict__
 
 # PARA EL METODO POST
-def usuario_nuevo(dto):
+def usuario_nuevo(request):
+    dto = UsuarioEntradaDTO(**request)
     # email único
     if Usuario.query.filter_by(email=dto.email).first():
         raise ValueError("El email ya está registrado")
@@ -57,33 +60,42 @@ def usuario_nuevo(dto):
     db.session.commit() # ejecuta la insercion en la base de datos
 
 # PARA EL METODO PUT
-def editar_usuario(id, dto):
+def editar_usuario(id, request):
     # Buscar el usuario por su nombre actual
-    usuario = Usuario.query.get(id).first()
-    if not usuario: return ValueError("Usuario no encontrado")
-
+    usuario = Usuario.query.get(id)
+    if not usuario: raise ValueError("Usuario no encontrado")
+    dto = UsuarioUpdateDTO(**request)
+    if not any([dto.nombre, dto.email, dto.telefono, dto.contrasenia]):
+        raise ValueError("No se proporcionaron datos para actualizar")
+    modificado = False
     # Actualizar los campos del usuario
     if dto.nombre is not None:
         # Verificar si el nuevo nombre de usuario ya está en uso por otro usuario
         if usuario.nombre != dto.nombre and Usuario.query.filter_by(nombre=dto.nombre).first():
             raise ValueError("El nombre de usuario ya está registrado")
         usuario.nombre = dto.nombre
+        modificado = True
 
     if dto.email is not None:
         # Verifico si el nuevo email ya está en uso por otro usuario
         if usuario.email != dto.email and Usuario.query.filter_by(email=dto.email).first():
             raise ValueError("El email ya está registrado")
         usuario.email = dto.email
+        modificado = True
 
     if dto.telefono is not None:
         # Verifico si el nuevo telefono ya está en uso por otro usuario
         if usuario.telefono != dto.telefono and Usuario.query.filter_by(telefono=dto.telefono).first():
             raise ValueError("El teléfono ya está registrado")
         usuario.telefono = dto.telefono
+        modificado = True
 
     if dto.contrasenia is not None:
         usuario.contrasenia = generate_password_hash(dto.contrasenia)
+        modificado = True
 
+    if not modificado:
+        raise ValueError("No se pudo modificar al usuario")
     # Guardar los cambios en la base de datos
     db.session.commit()
 

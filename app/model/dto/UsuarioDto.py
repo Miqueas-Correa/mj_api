@@ -63,6 +63,6 @@ class UsuarioSalidaDTO:
 # DTO para modificar usuario
 class UsuarioUpdateDTO(BaseModel):
     nombre: Optional[str] = Field(None, min_length=2, max_length=50)
-    email: Optional[EmailStr]
+    email: Optional[EmailStr] = None
     telefono: Optional[str] = Field(None, pattern=r"^\+?\d[\d\s\-]{7,19}$")
     contrasenia: Optional[str] = Field(None, min_length=6, max_length=100)

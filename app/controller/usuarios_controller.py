@@ -1,8 +1,6 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 from service.usuarios_service import check_password, eliminar_usuario_service, listar_usuarios_service, obtener_usuario, usuario_nuevo, editar_usuario
-from model.usuarios_model import Usuario
-from model.dto.UsuarioDTO import UsuarioEntradaDTO, UsuarioSalidaDTO, UsuarioUpdateDTO
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
@@ -40,7 +38,7 @@ def crear_usuario():
     if not request.is_json: return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
     try:
         # valido y creo el usuario
-        usuario_nuevo(UsuarioEntradaDTO(**request.json))
+        usuario_nuevo(request.json)
         return jsonify({"message": "Usuario creado exitosamente"}), 201
     except ValidationError as e:
         return jsonify({"errors": e.errors()}), 400
@@ -51,7 +49,6 @@ def crear_usuario():
 @usuarios_bp.route("/usuarios/comprobar/<string:nombre>", methods=["POST"])
 def comprobar_contrasenia(nombre):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-
     try:
         # valido y compruebo la contraseña
         contrasenia = request.json.get("contrasenia") if "contrasenia" in request.json else None
@@ -65,7 +62,6 @@ def comprobar_contrasenia(nombre):
 @usuarios_bp.route("/usuarios/comprobar/<int:id>", methods=["POST"])
 def comprobar_contrasenia_id(id):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-
     try:
         # valido y compruebo la contraseña
         contrasenia = request.json.get("contrasenia") if "contrasenia" in request.json else None
@@ -80,19 +76,25 @@ def comprobar_contrasenia_id(id):
 @usuarios_bp.route('/usuarios/<int:id>', methods=["PUT"])
 def modificar_usuario(id):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-
     try:
         # reviso si el usuario existe y si la contraseña es correcta
-        editar_usuario(id, UsuarioUpdateDTO(**request.json))
+        editar_usuario(id, request.json)
         return jsonify({"message":"Usuario modificado exitosamente"}),200
     except ValueError as e:
-        return jsonify({"error": e.errors()}),404
+        return jsonify({"error": str(e)}),404
 
 # Eliminar usuario (cambiar su estado a inactivo)
 @usuarios_bp.route('/usuarios/<int:id>', methods=["DELETE"])
 def eliminar_usuario_json(id):
-    return jsonify(eliminar_usuario_service(id)),200
+    try:
+        return jsonify(eliminar_usuario_service(id, by_id=True)),200
+    except ValueError as e:
+        return jsonify({"error": str(e)}),404
 
 @usuarios_bp.route("/usuarios/<string:nombre>", methods=["DELETE"])
 def eliminar_usuario_nombre(nombre):
-    return jsonify(eliminar_usuario_service(nombre, by_id=False)),200
+    try:
+        # elimino el usuario por su nombre
+        return jsonify(eliminar_usuario_service(nombre, by_id=False)),200
+    except ValueError as e:
+        return jsonify({"error": str(e)}),404
