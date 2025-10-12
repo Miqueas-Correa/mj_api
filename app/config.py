@@ -9,8 +9,9 @@ class Config:
     # Configuración de la DB
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_USER = os.getenv("DB_USER", "root")
-    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
     DB_NAME = os.getenv("DB_NAME", "mj_db")
+    DB_PORT = os.getenv("DB_PORT", 3306)
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "") or os.getenv("DB_PASSWORD2", "")
 
     # URI de SQLAlchemy
     SQLALCHEMY_DATABASE_URI = (
