@@ -13,24 +13,28 @@ def listar_usuarios():
         return jsonify(listar_usuarios_service(L_activos)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar usuario por nombre
 @usuarios_bp.route("/usuarios/<string:nombre>", methods=["GET"])
 def obtener_usuario_por_nombre(nombre):
     try:
-        L_activos = request.args.get("activos", default=None, type=str)
-        return jsonify(obtener_usuario(False, nombre, L_activos)), 200
+        return jsonify(obtener_usuario(False, nombre)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar usuario por id
 @usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
 def obtener_usuario_por_id(id):
     try:
-        L_activos = request.args.get("activos", default=None, type=str)
-        return jsonify(obtener_usuario(True, id, L_activos)), 200
+        return jsonify(obtener_usuario(True, id)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Crear usuario
 @usuarios_bp.route("/usuarios", methods=["POST"])
@@ -41,9 +45,11 @@ def crear_usuario():
         usuario_nuevo(request.json)
         return jsonify({"message": "Usuario creado exitosamente"}), 201
     except ValidationError as e:
-        return jsonify({"errors": e.errors()}), 400
-    except ValueError as ve:
-        return jsonify({"error": str(ve)}), 400
+        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # comprobar contraseña nombre
 @usuarios_bp.route("/usuarios/comprobar/<string:nombre>", methods=["POST"])
@@ -55,8 +61,12 @@ def comprobar_contrasenia(nombre):
         if contrasenia is None: return jsonify({"error":"Faltan datos"}),400
         check_password(nombre, contrasenia, by_id=False)
         return jsonify({"message": "Contraseña correcta"}), 200
+    except ValidationError as e:
+        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
     except ValueError as e:
-        return jsonify({"errors": str(e)}), 400
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # comprobar contraseña id
 @usuarios_bp.route("/usuarios/comprobar/<int:id>", methods=["POST"])
@@ -68,8 +78,12 @@ def comprobar_contrasenia_id(id):
         if contrasenia is None: return jsonify({"error":"Faltan datos"}),400
         check_password(id, contrasenia, by_id=True)
         return jsonify({"message": "Contraseña correcta"}), 200
+    except ValidationError as e:
+        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
     except ValueError as e:
-        return jsonify({"errors": str(e)}), 400
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Modificar usuario, este metodo permite cambiar los datos de un usuario existente. antes
 # de utilizarlo se supone que se comprobo la contraseña
@@ -80,8 +94,12 @@ def modificar_usuario(id):
         # reviso si el usuario existe y si la contraseña es correcta
         editar_usuario(id, request.json)
         return jsonify({"message":"Usuario modificado exitosamente"}),200
+    except ValidationError as e:
+        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
     except ValueError as e:
-        return jsonify({"error": str(e)}),404
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Eliminar usuario (cambiar su estado a inactivo)
 @usuarios_bp.route('/usuarios/<int:id>', methods=["DELETE"])
@@ -89,7 +107,9 @@ def eliminar_usuario_json(id):
     try:
         return jsonify(eliminar_usuario_service(id, by_id=True)),200
     except ValueError as e:
-        return jsonify({"error": str(e)}),404
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 @usuarios_bp.route("/usuarios/<string:nombre>", methods=["DELETE"])
 def eliminar_usuario_nombre(nombre):
@@ -97,4 +117,6 @@ def eliminar_usuario_nombre(nombre):
         # elimino el usuario por su nombre
         return jsonify(eliminar_usuario_service(nombre, by_id=False)),200
     except ValueError as e:
-        return jsonify({"error": str(e)}),404
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
