@@ -16,6 +16,10 @@ def listar_usuarios_service(L_activos):
                 raise ValueError("Error en el parámetro 'activos' debe ser 'true' o 'false'")
         else:
             usuarios = Usuario.query.all()
+
+        if not usuarios:
+            raise ValueError("No se encontraron usuarios")
+
         return [UsuarioSalidaDTO.from_model(u).__dict__ for u in usuarios]
     except ValueError as e:
         raise ValueError(str(e))
