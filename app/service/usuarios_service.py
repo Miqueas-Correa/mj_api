@@ -75,14 +75,16 @@ def usuario_nuevo(request):
         raise ValueError("Error al crear usuario: " + str(e))
 
 # PARA EL METODO PUT
-def editar_usuario(id, request):
+def editar_usuario(id, request, by_id):
     try:
-        # Buscar el usuario por su nombre actual
-        usuario = Usuario.query.get(id)
+        # busco por id o por nombre
+        usuario = Usuario.query.get(id) if by_id else Usuario.query.filter_by(nombre=id).first()
         if not usuario: raise ValueError("Usuario no encontrado")
+
         dto = UsuarioUpdateDTO(**request)
         if not any([dto.nombre, dto.email, dto.telefono, dto.contrasenia]):
             raise ValueError("No se proporcionaron datos para actualizar")
+
         modificado = False
         # Actualizar los campos del usuario
         if dto.nombre is not None:

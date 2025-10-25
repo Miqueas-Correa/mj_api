@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Annotated, Optional
 from pydantic import BaseModel, Field
 
-class ProductosEntradaDTO(BaseModel):
+class ProductoEntradaDTO(BaseModel):
     nombre: Annotated[str, Field(min_length=1, max_length=100)]
     precio: Annotated[float, Field(gt=0)]
     stock: Annotated[int, Field(ge=0)]
@@ -34,3 +34,13 @@ class ProductoSalidaDTO:
             imagen_url=producto.imagen_url,
             mostrar=producto.mostrar
         )
+
+# DTO para modificar
+class ProductoUpdateDTO(BaseModel):
+    nombre: Optional[str] = Field(None, min_length=2, max_length=50)
+    precio: Optional[float] = Field(None, ge=0) # el precio puede ser 0
+    stock: Optional[int] = Field(None, ge=0) # el stock puede ser 0
+    categoria: Optional[str] = Field(None, min_length=1, max_length=100)
+    descripcion: Optional[str] = Field(None, min_length=1, max_length=200)
+    imagen_url: Optional[str] = Field(None, min_length=1, max_length=200)
+    mostrar: Optional[bool] = None

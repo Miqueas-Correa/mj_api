@@ -92,7 +92,23 @@ def modificar_usuario(id):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
     try:
         # reviso si el usuario existe y si la contraseña es correcta
-        editar_usuario(id, request.json)
+        editar_usuario(id, request.json, by_id=True)
+        return jsonify({"message":"Usuario modificado exitosamente"}),200
+    except ValidationError as e:
+        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
+
+# Modificar usuario, este metodo permite cambiar los datos de un usuario existente. antes
+# de utilizarlo se supone que se comprobo la contraseña
+@usuarios_bp.route('/usuarios/<string:nombre>', methods=["PUT"])
+def modificar_usuario_nombre(nombre):
+    if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
+    try:
+        # reviso si el usuario existe y si la contraseña es correcta
+        editar_usuario(nombre, request.json, by_id=False)
         return jsonify({"message":"Usuario modificado exitosamente"}),200
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
