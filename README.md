@@ -36,7 +36,17 @@ busqueda de usuario por nombre o id. esto es posible porque el nombre es unico
 
 POST:
 - /usuarios
-Se pasa algo asi
+Condiciones para que funcione:
+
+    nombre: Debe ser un str, no debe estar vacio, minimo 2 a 50 caracteres.
+
+    email: Debe ser un str y cumplir los parametros de Google.
+
+    telefono: Debe ser un str, y debe ser un numero verdadero argentino.
+
+    contrasenia: Debe ser un str, no debe estar vacio, minimo 6 a 100 caracteres.
+
+Se pasa algo asi, todos estos campos son obligatorios:
 {
     "nombre": "Miqueas",
     "email": "mike.correa@example.com",
@@ -60,7 +70,7 @@ PUT:
 - /usuarios/<id>
 - /usuarios/<nombre>
 Adbertencia antes de usar confirmar que es el usuario pidiendo la contraseña.
-Este endpoint puede modificar todos los campos del usuario, puede modificar el que desee sin necesidad de modificar todos.
+Este endpoint puede modificar todos los campos del usuario, se pueden ver en el POST, puede modificar el que desee sin necesidad de modificar todos.
 Se pasa algo asi:
 {
     "contrasenia": "123456789"
@@ -175,6 +185,22 @@ Devolucion:
 
 POST:
 En caso de que todo este correcto devolvera un status code 200
+Estos son los datos que se deben pasar con sus condiciones para poder realizar la operacion:
+
+    nombre: Debe ser un str, no puede ser none o null, debe contener almenos 2 caracteres como minimo y un maximo de 50.
+
+    precio: Debe ser un float, no puede ser menor a 0.
+
+    stock: Debe ser un entero, no puede ser menor a 0.
+
+    categoria: Debe ser un str, no puede ser none o null, debe contener almenos 1 caracteres como minimo y un maximo de 100.
+
+    descripcion: Debe ser un str, no puede ser none o null, debe contener almenos 1 caracteres como minimo y un maximo de 200.
+
+    imagen_url: Debe ser un str, no puede ser none o null, debe contener almenos 1 caracteres como minimo y un maximo de 200.
+
+    mostrar: Debe ser un booleano.
+
 - /productos
 Ejemplo de body:
 {
@@ -213,3 +239,5 @@ Ejemplo de body:
     "precio": 19999.99,
     "stock": 10
 }
+
+## PEDIDOS:
