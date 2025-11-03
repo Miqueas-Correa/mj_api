@@ -1,76 +1,61 @@
 from flask import Blueprint, request, jsonify
-from model.dto.PedidosDTO import PedidoSalidaDTO
+from pydantic import ValidationError
+from service.pedidos_service import crear, editar, eliminar, listar, obtener, crear
 
 pedidos_bp = Blueprint("pedidos", __name__)
 
 # Listar pedidos
 @pedidos_bp.route("/pedidos", methods=["GET"])
-def listar_pedidos():
-    pedidos = Pedido.query.all()
-    print(pedidos)
-    # .query es el acceso al constructor de consultas de SQLAlchemy (Query object).
-    # .all() ejecuta la consulta SELECT * FROM pedidos y devuelve una lista de instancias del modelo Pedido.
-    # Tipo devuelto: (cada elemento es un objeto con atributos como id, id_usuario, codigo_producto, total, fecha, cerrado).
-    return jsonify([PedidoSalidaDTO.from_model(p).__dict__ for p in pedidos]), 200
-
-from flask import Blueprint, request, jsonify
-from pydantic import ValidationError
-from service.productos_service import editar_producto, eliminar_producto_service, listar_productos_service, obtener_producto, producto_nuevo
-
-productos_bp = Blueprint("productos", __name__)
-
-# Listar Productos
-@productos_bp.route("/productos", methods=["GET"])
-def listar_productos():
-    # listo los productos, en stock y sin stock
+def get():
+    # listo los pedidos
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str)
-        return jsonify(listar_productos_service(L_mostrar)), 200
+        L_cerrado = request.args.get("cerrado", default=None, type=str)
+        return jsonify(listar(L_cerrado)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# buscar producto por nombre
-@productos_bp.route("/productos/<string:nombre>", methods=["GET"])
-def obtener_producto_por_nombre(nombre):
+# buscar pedido por id usuario
+@pedidos_bp.route("/pedidos/usuario/<int:id>", methods=["GET"])
+def get_id_usuario(id):
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str)
-        return jsonify(obtener_producto(0, nombre, L_mostrar)), 200
+        L_cerrado = request.args.get("cerrado", default=None, type=str)
+        return jsonify(obtener(0, id, L_cerrado)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# buscar producto por id
-@productos_bp.route("/productos/<int:id>", methods=["GET"])
-def obtener_producto_por_id(id):
+# buscar pedido por id
+@pedidos_bp.route("/pedidos/<int:id>", methods=["GET"])
+def get_id(id):
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str)
-        return jsonify(obtener_producto(1, id, L_mostrar)), 200
+        L_cerrado = request.args.get("cerrado", default=None, type=str)
+        return jsonify(obtener(1, id, L_cerrado)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# buscar producto por categoria
-@productos_bp.route("/productos/categoria/<string:categoria>", methods=["GET"])
-def obtener_producto_por_categoria(categoria):
+# buscar pedido por codigo producto
+@pedidos_bp.route("/pedidos/producto/<int:codigo>", methods=["GET"])
+def get_codigo_producto(codigo):
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str)
-        return jsonify(obtener_producto(2, categoria, L_mostrar)), 200
+        L_cerrado = request.args.get("cerrado", default=None, type=str)
+        return jsonify(obtener(2, codigo, L_cerrado)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Crear producto
-@productos_bp.route("/productos", methods=["POST"])
-def crear_producto():
+@pedidos_bp.route("/pedidos", methods=["POST"])
+def post():
     try:
         if not request.is_json: return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
-        producto_nuevo(request.json)
-        return jsonify({"message": "Producto creado exitosamente"}), 201
+        crear(request.json)
+        return jsonify({"message": "Pedido creado exitosamente"}), 201
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
     except ValueError as e:
@@ -78,27 +63,13 @@ def crear_producto():
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Modificar producto, este metodo permite cambiar los datos de un producto existente
-@productos_bp.route('/productos/<int:id>', methods=["PUT"])
-def modificar_producto(id):
+# Modificar peido
+@pedidos_bp.route('/pedidos/<int:id>', methods=["PUT"])
+def put(id):
     try:
         if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-        editar_producto(id, request.json, by_id=True)
-        return jsonify({"message":"Producto modificado exitosamente"}),200
-    except ValidationError as e:
-        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# Modificar producto, este metodo permite cambiar los datos de un producto existente
-@productos_bp.route('/productos/<string:nombre>', methods=["PUT"])
-def modificar_producto_nombre(nombre):
-    try:
-        if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-        editar_producto(nombre, request.json, by_id=False)
-        return jsonify({"message":"Producto modificado exitosamente"}),200
+        editar(id, request.json)
+        return jsonify({"message":"Pedido modificado exitosamente"}),200
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
     except ValueError as e:
@@ -107,19 +78,10 @@ def modificar_producto_nombre(nombre):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Eliminar producto por id
-@productos_bp.route('/productos/<int:id>', methods=["DELETE"])
-def eliminar_producto_json(id):
+@pedidos_bp.route('/pedidos/<int:id>', methods=["DELETE"])
+def delete(id):
     try:
-        return jsonify(eliminar_producto_service(id, by_id=True)),200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-@productos_bp.route("/productos/<string:nombre>", methods=["DELETE"])
-def eliminar_producto_nombre(nombre):
-    try:
-        return jsonify(eliminar_producto_service(nombre, by_id=False)),200
+        return jsonify(eliminar(id)),200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:

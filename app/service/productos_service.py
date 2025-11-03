@@ -1,10 +1,9 @@
 from pydantic import ValidationError
 from model.dto.ProductosDTO import ProductoSalidaDTO, ProductoEntradaDTO, ProductoUpdateDTO
-from model.productos_model import Producto
-from model.productos_model import db
+from model.productos_model import Producto, db
 
 # PARA EL METODO GET
-def listar_productos_service(L_mostrar):
+def listar(L_mostrar):
     try:
         if L_mostrar is not None:
             if L_mostrar.lower() == 'true':
@@ -23,7 +22,7 @@ def listar_productos_service(L_mostrar):
 
 # buscar productos por id, por nombre o categoria
 # si by es 1 busca por id, si es 0 busca por nombre, si es 2 busca por categoria
-def obtener_producto(by, valor, L_mostrar):
+def obtener(by, valor, L_mostrar):
     try:
         # si by no contiene 0,1 o 2 lanza error
         if by not in [0, 1, 2]: raise ValueError("Error en el parámetro 'by' debe ser 0, 1 o 2")
@@ -61,7 +60,7 @@ def obtener_producto(by, valor, L_mostrar):
         raise ValueError("Error al listar productos: " + str(e))
 
 # PARA EL METODO POST
-def producto_nuevo(request):
+def crear(request):
     try:
         dto = ProductoEntradaDTO(**request)
         # nombre unico
@@ -91,7 +90,7 @@ def producto_nuevo(request):
         raise RuntimeError(f"Error inesperado al crear el producto: {str(e)}")
 
 # PARA EL METODO PUT
-def editar_producto(valor, request, by_id):
+def editar(valor, request, by_id):
     try:
         # busco por id o por nombre
         producto = Producto.query.get(valor) if by_id else Producto.query.filter_by(nombre=valor).first()
@@ -155,7 +154,7 @@ def editar_producto(valor, request, by_id):
         raise ValueError("Error al modificar el producto: " + str(e))
 
 # PARA EL METODO DELETE
-def eliminar_producto_service(valor, by_id):
+def eliminar(valor, by_id):
     try:
         # busco por id o por nombre
         producto = Producto.query.get(valor) if by_id else Producto.query.filter_by(nombre=valor).first()

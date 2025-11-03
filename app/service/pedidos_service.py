@@ -1,85 +1,77 @@
 from pydantic import ValidationError
-from model.dto.ProductosDTO import ProductoSalidaDTO, ProductoEntradaDTO, ProductoUpdateDTO
-from model.productos_model import Producto
-from model.productos_model import db
+from model.dto.PedidosDTO import PedidoSalidaDTO, PedidoEntradaDTO, PedidoUpdateDTO
+from model.pedidos_model import Pedido, db
 
 # PARA EL METODO GET
-def listar_productos_service(L_mostrar):
+def listar(L_cerrado):
     try:
-        if L_mostrar is not None:
-            if L_mostrar.lower() == 'true':
-                productos = Producto.query.filter_by(mostrar=True).all()
-            elif L_mostrar.lower() == 'false':
-                productos = Producto.query.filter_by(mostrar=False).all()
+        if L_cerrado is not None:
+            if L_cerrado.lower() == 'true':
+                pedidos = Pedido.query.filter_by(cerrado=True).all()
+            elif L_cerrado.lower() == 'false':
+                pedidos = Pedido.query.filter_by(cerrado=False).all()
             else:
-                raise ValueError("Error en el parámetro 'mostrar' debe ser 'true' o 'false'")
+                raise ValueError("Error en el parámetro 'cerrado' debe ser 'true' o 'false'")
         else:
-            productos = Producto.query.all()
-        return [ProductoSalidaDTO.from_model(u).__dict__ for u in productos]
+            pedidos = Pedido.query.all()
+        return [PedidoSalidaDTO.from_model(u).__dict__ for u in pedidos]
     except ValueError as e:
         raise ValueError(str(e))
     except Exception as e:
-        raise ValueError("Error al listar productos: " + str(e))
+        raise ValueError("Error al listar pedidos: " + str(e))
 
-# buscar productos por id, por nombre o categoria
-# si by es 1 busca por id, si es 0 busca por nombre, si es 2 busca por categoria
-def obtener_producto(by, valor, L_mostrar):
+# buscar pedidos por id, por id usuario o codigo producto
+# si by es 1 busca por id, si es 0 busca por id usuario, si es 2 busca por codigo producto
+def obtener(by, valor, L_cerrado):
     try:
         # si by no contiene 0,1 o 2 lanza error
         if by not in [0, 1, 2]: raise ValueError("Error en el parámetro 'by' debe ser 0, 1 o 2")
 
         if by == 1:
-            producto = Producto.query.get(valor)
-            if not producto: raise ValueError(f"Producto {valor} no fue encontrado")
-            productos = [producto]
+            pedido = Pedido.query.get(valor)
+            if not pedido: raise ValueError(f"Producto {valor} no fue encontrado")
+            pedidos = [pedido]
 
         elif by == 0:
-            productos = Producto.query.filter(Producto.nombre.like(f"%{valor}%")).all()
-            if not productos: raise ValueError(f"No se encontraron productos con nombre similar a '{valor}'")
+            pedidos = Pedido.query.filter(Pedido.id_usuario.like(f"%{valor}%")).all()
+            if not pedidos: raise ValueError(f"No se encontraron pedidos con el id usuario similar a: '{valor}'")
 
         else:  # by == 2
-            productos = Producto.query.filter_by(categoria=valor).all()
-            if not productos: raise ValueError(f"No se encontraron productos en la categoría '{valor}'")
+            pedidos = Pedido.query.filter_by(codigo_producto=valor).all()
+            if not pedidos: raise ValueError(f"No se encontraron pedidos con el codigo producto: '{valor}'")
 
-        # Filtrar según L_mostrar
-        if L_mostrar is not None:
-            if L_mostrar.lower() not in ['true', 'false']:
-                raise ValueError("Error en el parámetro 'mostrar', debe ser 'true' o 'false'")
+        # Filtrar según L_cerrado
+        if L_cerrado is not None:
+            if L_cerrado.lower() not in ['true', 'false']:
+                raise ValueError("Error en el parámetro 'cerrado', debe ser 'true' o 'false'")
 
-            mostrar_activos = L_mostrar.lower() == 'true'
-            productos = [p for p in productos if p.mostrar == mostrar_activos]
+            mostrar_cerrados = L_cerrado.lower() == 'true'
+            pedidos = [p for p in pedidos if p.cerrado == mostrar_cerrados]
 
-            if not productos:
-                raise ValueError("No se encontraron productos que coincidan con el filtro 'mostrar'")
+            if not pedidos:
+                raise ValueError("No se encontraron pedidos que coincidan con el filtro 'cerrado'")
 
         # Convertir a DTOs
         # Si hay uno solo, devolvemos el objeto directamente
-        return [ProductoSalidaDTO.from_model(p).__dict__ for p in productos]
+        return [PedidoSalidaDTO.from_model(p).__dict__ for p in pedidos]
     except ValueError as e:
         raise ValueError(str(e))
     except Exception as e:
-        raise ValueError("Error al listar productos: " + str(e))
+        raise ValueError("Error al listar pedidos: " + str(e))
 
 # PARA EL METODO POST
-def producto_nuevo(request):
+def crear(request):
     try:
-        dto = ProductoEntradaDTO(**request)
-        # nombre unico
-        if Producto.query.filter_by(nombre=dto.nombre).first():
-            raise ValueError("Ya existe un producto con ese nombre")
+        dto = PedidoEntradaDTO(**request)
 
-        # Si pasa, creo el producto
-        nuevo_producto = Producto(
-            nombre=dto.nombre,
-            precio=dto.precio,
-            stock=dto.stock,
-            categoria=dto.categoria,
-            descripcion=dto.descripcion,
-            imagen_url=dto.imagen_url,
-            mostrar=dto.mostrar
+        # Creo el pedido
+        nuevo_pedido = Pedido(
+            id_usuario=dto.id_usuario,
+            codigo_producto=dto.codigo_producto,
+            total=dto.total
         )
 
-        db.session.add(nuevo_producto) # prepara la insercion
+        db.session.add(nuevo_pedido) # prepara la insercion
         db.session.commit() # ejecuta la insercion en la base de datos
     except ValidationError as e:
         raise ValueError(f"Error de validación: {e.errors()}")
@@ -88,60 +80,42 @@ def producto_nuevo(request):
         raise
     except Exception as e:
         db.session.rollback()
-        raise RuntimeError(f"Error inesperado al crear el producto: {str(e)}")
+        raise RuntimeError(f"Error inesperado al crear el pedido: {str(e)}")
 
 # PARA EL METODO PUT
-def editar_producto(valor, request, by_id):
+def editar(valor, request):
     try:
-        # busco por id o por nombre
-        producto = Producto.query.get(valor) if by_id else Producto.query.filter_by(nombre=valor).first()
+        # busco por id
+        pedido = Pedido.query.get(valor)
 
-        if not producto: raise ValueError("Producto no encontrado")
+        if not pedido: raise ValueError("Pedido no encontrado")
 
-        dto = ProductoUpdateDTO(**request)
-        if not any([dto.nombre, dto.precio, dto.stock, dto.categoria,
-                    dto.descripcion, dto.imagen_url, dto.mostrar]):
+        dto = PedidoUpdateDTO(**request)
+        if not any([dto.id_usuario, dto.codigo_producto, dto.total, dto.cerrado]):
             raise ValueError("No se proporcionaron datos para actualizar")
 
         modificado = False
         # Actualizar los campos
-        if dto.nombre is not None:
-            # Verificar si el nuevo nombre ya está en uso por otro
-            if producto.nombre != dto.nombre and Producto.query.filter_by(nombre=dto.nombre).first():
-                raise ValueError("El nombre de usuario ya está registrado")
-            producto.nombre = dto.nombre
+        if dto.id_usuario is not None:
+            pedido.id_usuario = dto.id_usuario
             modificado = True
 
-        if dto.precio < 0:
-            raise ValueError("El precio no puede ser negativo")
+        if dto.total < 0:
+            raise ValueError("El total no puede ser negativo")
         else:
-            producto.precio = dto.precio
+            pedido.total = dto.total
             modificado = True
 
-        if dto.stock < 0:
-            raise ValueError("El stock no puede ser negativo")
-        else:
-            producto.stock = dto.stock
+        if dto.codigo_producto is not None:
+            pedido.codigo_producto = dto.codigo_producto
             modificado = True
 
-        if dto.categoria is not None:
-            producto.categoria = dto.categoria
-            modificado = True
-
-        if dto.descripcion is not None:
-            producto.descripcion = dto.descripcion
-            modificado = True
-
-        if dto.imagen_url is not None:
-            producto.imagen_url = dto.imagen_url
-            modificado = True
-
-        if dto.mostrar is not None:
-            producto.mostrar = dto.mostrar
+        if dto.cerrado is not None:
+            pedido.cerrado = dto.cerrado
             modificado = True
 
         if not modificado:
-            raise ValueError("No se pudo modificar el producto")
+            raise ValueError("No se pudo modificar el pedido")
         # Guardar los cambios en la base de datos
         db.session.commit()
     except ValidationError as e:
@@ -152,20 +126,20 @@ def editar_producto(valor, request, by_id):
         raise
     except Exception as e:
         db.session.rollback()  # Revertir cambios en caso de error
-        raise ValueError("Error al modificar el producto: " + str(e))
+        raise ValueError("Error al modificar el pedido: " + str(e))
 
 # PARA EL METODO DELETE
-def eliminar_producto_service(valor, by_id):
+def eliminar(valor):
     try:
-        # busco por id o por nombre
-        producto = Producto.query.get(valor) if by_id else Producto.query.filter_by(nombre=valor).first()
-        if not producto: raise ValueError("Producto no encontrado")
-        db.session.delete(producto)
+        # busco por id
+        pedido = Pedido.query.get(valor)
+        if not pedido: raise ValueError("Pedido no encontrado")
+        db.session.delete(pedido)
         db.session.commit()
-        return {"message": "Producto eliminado exitosamente"}
+        return {"message": "Pedido eliminado exitosamente"}
     except ValueError as e:
         db.session.rollback()
         raise
     except Exception as e:
         db.session.rollback()  # Revertir cambios en caso de error
-        raise ValueError("Error al eliminar el producto: " + str(e))
+        raise ValueError("Error al eliminar el pedido: " + str(e))

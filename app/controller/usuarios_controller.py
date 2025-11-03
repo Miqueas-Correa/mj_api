@@ -1,16 +1,16 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from service.usuarios_service import check_password, eliminar_usuario_service, listar_usuarios_service, obtener_usuario, usuario_nuevo, editar_usuario
+from service.usuarios_service import check_password, eliminar, listar, obtener, crear, editar
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
 # Listar todos los usuarios
 @usuarios_bp.route("/usuarios", methods=["GET"])
-def listar_usuarios():
+def get():
     try:
         L_activos = request.args.get("activos", default=None, type=str)
         # filtro los datos sensibles (contrasenia) y convierto a dict
-        return jsonify(listar_usuarios_service(L_activos)), 200
+        return jsonify(listar(L_activos)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
@@ -20,7 +20,7 @@ def listar_usuarios():
 @usuarios_bp.route("/usuarios/<string:nombre>", methods=["GET"])
 def obtener_usuario_por_nombre(nombre):
     try:
-        return jsonify(obtener_usuario(False, nombre)), 200
+        return jsonify(obtener(False, nombre)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
@@ -28,9 +28,9 @@ def obtener_usuario_por_nombre(nombre):
 
 # buscar usuario por id
 @usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
-def obtener_usuario_por_id(id):
+def obtener(id):
     try:
-        return jsonify(obtener_usuario(True, id)), 200
+        return jsonify(obtener(True, id)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
@@ -38,11 +38,11 @@ def obtener_usuario_por_id(id):
 
 # Crear usuario
 @usuarios_bp.route("/usuarios", methods=["POST"])
-def crear_usuario():
+def post():
     if not request.is_json: return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
     try:
         # valido y creo el usuario
-        usuario_nuevo(request.json)
+        crear(request.json)
         return jsonify({"message": "Usuario creado exitosamente"}), 201
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
@@ -53,7 +53,7 @@ def crear_usuario():
 
 # comprobar contraseña nombre
 @usuarios_bp.route("/usuarios/comprobar/<string:nombre>", methods=["POST"])
-def comprobar_contrasenia(nombre):
+def check_password_name(nombre):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
     try:
         # valido y compruebo la contraseña
@@ -70,7 +70,7 @@ def comprobar_contrasenia(nombre):
 
 # comprobar contraseña id
 @usuarios_bp.route("/usuarios/comprobar/<int:id>", methods=["POST"])
-def comprobar_contrasenia_id(id):
+def check_password_id(id):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
     try:
         # valido y compruebo la contraseña
@@ -88,11 +88,11 @@ def comprobar_contrasenia_id(id):
 # Modificar usuario, este metodo permite cambiar los datos de un usuario existente. antes
 # de utilizarlo se supone que se comprobo la contraseña
 @usuarios_bp.route('/usuarios/<int:id>', methods=["PUT"])
-def modificar_usuario(id):
+def put_id(id):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
     try:
         # reviso si el usuario existe y si la contraseña es correcta
-        editar_usuario(id, request.json, by_id=True)
+        editar(id, request.json, by_id=True)
         return jsonify({"message":"Usuario modificado exitosamente"}),200
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
@@ -104,11 +104,11 @@ def modificar_usuario(id):
 # Modificar usuario, este metodo permite cambiar los datos de un usuario existente. antes
 # de utilizarlo se supone que se comprobo la contraseña
 @usuarios_bp.route('/usuarios/<string:nombre>', methods=["PUT"])
-def modificar_usuario_nombre(nombre):
+def put_name(nombre):
     if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
     try:
         # reviso si el usuario existe y si la contraseña es correcta
-        editar_usuario(nombre, request.json, by_id=False)
+        editar(nombre, request.json, by_id=False)
         return jsonify({"message":"Usuario modificado exitosamente"}),200
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
@@ -119,19 +119,19 @@ def modificar_usuario_nombre(nombre):
 
 # Eliminar usuario (cambiar su estado a inactivo)
 @usuarios_bp.route('/usuarios/<int:id>', methods=["DELETE"])
-def eliminar_usuario_json(id):
+def dalete_id(id):
     try:
-        return jsonify(eliminar_usuario_service(id, by_id=True)),200
+        return jsonify(eliminar(id, by_id=True)),200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 @usuarios_bp.route("/usuarios/<string:nombre>", methods=["DELETE"])
-def eliminar_usuario_nombre(nombre):
+def delete_name(nombre):
     try:
         # elimino el usuario por su nombre
-        return jsonify(eliminar_usuario_service(nombre, by_id=False)),200
+        return jsonify(eliminar(nombre, by_id=False)),200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:

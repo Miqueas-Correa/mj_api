@@ -1,11 +1,10 @@
 from pydantic import ValidationError
 from model.dto.UsuariosDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, UsuarioUpdateDTO
-from model.usuarios_model import Usuario
+from model.usuarios_model import Usuario, db
 from werkzeug.security import generate_password_hash, check_password_hash
-from model.usuarios_model import db
 
 # PARA EL METODO GET
-def listar_usuarios_service(L_activos):
+def listar(L_activos):
     try:
         if L_activos is not None:
             if L_activos.lower() == 'true':
@@ -27,7 +26,7 @@ def listar_usuarios_service(L_activos):
         raise ValueError("Error al listar usuarios: " + str(e))
 
 # buscar usuario por id o por nombre
-def obtener_usuario(by_id, valor):
+def obtener(by_id, valor):
     try:
         if by_id:
             usuario = Usuario.query.get(valor)
@@ -42,7 +41,7 @@ def obtener_usuario(by_id, valor):
         raise ValueError("Error al listar usuarios: " + str(e))
 
 # PARA EL METODO POST
-def usuario_nuevo(request):
+def crear(request):
     try:
         dto = UsuarioEntradaDTO(**request)
         # email único
@@ -75,7 +74,7 @@ def usuario_nuevo(request):
         raise ValueError("Error al crear usuario: " + str(e))
 
 # PARA EL METODO PUT
-def editar_usuario(id, request, by_id):
+def editar(id, request, by_id):
     try:
         # busco por id o por nombre
         usuario = Usuario.query.get(id) if by_id else Usuario.query.filter_by(nombre=id).first()
@@ -140,7 +139,7 @@ def check_password(nombre_id, contrasenia, by_id):
         raise ValueError("Error al chekear la contraseña: " + str(e))
 
 # PARA EL METODO DELETE
-def eliminar_usuario_service(valor, by_id):
+def eliminar(valor, by_id):
     try:
         # busco el usuario por id o por nombre
         usuario = Usuario.query.get(valor) if by_id else Usuario.query.filter_by(nombre=valor).first()

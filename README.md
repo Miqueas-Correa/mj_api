@@ -241,3 +241,123 @@ Ejemplo de body:
 }
 
 ## PEDIDOS:
+GET: lista todo los pedidos, cuenta con un filtro para identificar los pedidos que se encuentren cerrados o no
+/pedidos
+/pedidos?cerrado=<true o false>
+Ejemplo de devolucion:
+[
+    {
+        "cerrado": false,
+        "codigo_producto": 1,
+        "fecha": "2025-09-17T19:46:26",
+        "id": 1,
+        "id_usuario": 2,
+        "total": 19999.99
+    },
+    {
+        "cerrado": true,
+        "codigo_producto": 3,
+        "fecha": "2025-09-17T19:46:26",
+        "id": 2,
+        "id_usuario": 3,
+        "total": 15999.5
+    },
+    {
+        "cerrado": false,
+        "codigo_producto": 2,
+        "fecha": "2025-09-17T19:46:26",
+        "id": 3,
+        "id_usuario": 2,
+        "total": 350000.0
+    }
+]
+
+GET:
+Buscar pedido por id, cuenta con cerrado.
+/pedidos/<id>
+/pedidos/<id>?cerrado=<true o false>
+Ejemplo de devolucion:
+[
+    {
+        "cerrado": false,
+        "codigo_producto": 2,
+        "fecha": "2025-09-17T19:46:26",
+        "id": 3,
+        "id_usuario": 2,
+        "total": 350000.0
+    }
+]
+
+GET:
+Obtiene los pedidos de un usuario.
+/pedidos/usuario/<id>
+/pedidos/usuario/<id>?cerrado=<true o false>
+Ejemplo de devolucion:
+[
+    {
+        "cerrado": false,
+        "codigo_producto": 1,
+        "fecha": "2025-09-17T19:46:26",
+        "id": 1,
+        "id_usuario": 2,
+        "total": 19999.99
+    },
+    {
+        "cerrado": false,
+        "codigo_producto": 2,
+        "fecha": "2025-09-17T19:46:26",
+        "id": 3,
+        "id_usuario": 2,
+        "total": 350000.0
+    }
+]
+
+GET:
+Obtiene los pedidos en los que aparece un producto.
+/pedidos/producto/<id>
+/pedidos/producto/<id>?cerrado=<true o false>
+Ejemplo de devolucion:
+[
+    {
+        "cerrado": false,
+        "codigo_producto": 2,
+        "fecha": "2025-09-17T19:46:26",
+        "id": 3,
+        "id_usuario": 2,
+        "total": 350000.0
+    }
+]
+
+POST:
+/pedidos
+Crea los pedidos, se ingresan los siguientes datos:
+    id_usuario: Debe ser un numero entero, igual o mayor a 1.
+    codigo_producto: Debe ser un numero entero, igual o mayor a 1.
+    total: Debe ser un numero flotante, igual o mayor a 0.
+
+Ejemplo de body:
+{
+    "id_usuario": 1,
+    "codigo_producto": 3,
+    "total": 0
+}
+
+PUT:
+/pedidos/<id>
+Modifica los pedidos, los datos modificables son los siguientes, todos los datos son opcionales:
+    id_usuario: Debe ser un numero entero, igual o mayor a 1.
+    codigo_producto: Debe ser un numero entero, igual o mayor a 1.
+    total: Debe ser un numero entero, igual o mayor a 1.
+    cerrado: Debe ser true o false.
+
+Ejemplo de body:
+{
+    "id_usuario": 1,
+    "codigo_producto": 3,
+    "total": 0,
+    "cerrado": "True"
+}
+
+DELETE:
+/pedidos/<int:id>
+Elimina el pedido por id
