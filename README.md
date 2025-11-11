@@ -1,7 +1,7 @@
 # mj_api
 API para el manejo de la base de datos del proyecto mj, utilizando flask en python.
 
-Esta maneja las solicitudes a la base de datos de este proyecto, haciendo uso de los metodos GET, POST, PUT Y DELETE.
+Esta maneja las solicitudes a la base de datos de este proyecto, haciendo uso de los metodos GET, POST, PUT Y DELETE. Utilizando una arquitectura MVC + service, quiere decir que utiliza modelos, vistas(pensada para un futuro, actualmente no sirve de mucho), controladores y servicios.
 
 # IMPORTANTE DESCARGAR DEPENDENCIAS Y LIBRERIAS USANDO EL ARCHIVO "requirements.txt" CON EL SIGUIENTE COMANDO:
 pip freeze > requirements.txt
@@ -346,16 +346,16 @@ PUT:
 /pedidos/<id>
 Modifica los pedidos, los datos modificables son los siguientes, todos los datos son opcionales:
     id_usuario: Debe ser un numero entero, igual o mayor a 1.
-    codigo_producto: Debe ser un numero entero, igual o mayor a 1.
-    total: Debe ser un numero entero, igual o mayor a 1.
+    producto_id: Debe ser un numero entero, igual o mayor a 1.
     cerrado: Debe ser true o false.
+    cantidad: Debe ser un flotante igual o mayor a cero.
 
 Ejemplo de body:
 {
-    "id_usuario": 1,
-    "codigo_producto": 3,
-    "total": 0,
-    "cerrado": "True"
+  "id_usuario": 2,
+  "detalles": [
+    { "producto_id": 1, "cantidad": 1 }
+  ]
 }
 
 DELETE:

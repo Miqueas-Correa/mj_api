@@ -1,9 +1,9 @@
 from flask import Flask
-from model import db
-from controller.pedidos_controller import pedidos_bp
-from controller.usuarios_controller import usuarios_bp
-from controller.productos_controller import productos_bp
-from config import Config
+from app.model import db
+from app.controller.pedidos_controller import pedidos_bp
+from app.controller.usuarios_controller import usuarios_bp
+from app.controller.productos_controller import productos_bp
+from app.config import Config
 
 app = Flask(__name__)
 

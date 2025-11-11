@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from service.usuarios_service import check_password, eliminar, listar, obtener, crear, editar
+from app.service.usuarios_service import check_password, eliminar, listar, obtener_U, crear, editar
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
@@ -18,9 +18,9 @@ def get():
 
 # buscar usuario por nombre
 @usuarios_bp.route("/usuarios/<string:nombre>", methods=["GET"])
-def obtener_usuario_por_nombre(nombre):
+def get_por_nombre(nombre):
     try:
-        return jsonify(obtener(False, nombre)), 200
+        return jsonify(obtener_U(False, nombre)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
@@ -28,9 +28,9 @@ def obtener_usuario_por_nombre(nombre):
 
 # buscar usuario por id
 @usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
-def obtener(id):
+def get_id(id):
     try:
-        return jsonify(obtener(True, id)), 200
+        return jsonify(obtener_U(True, id)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:

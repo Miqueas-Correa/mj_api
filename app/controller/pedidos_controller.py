@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from service.pedidos_service import crear, editar, eliminar, listar, obtener, crear
+from app.service.pedidos_service import crear, editar, eliminar, listar, obtener, crear
 
 pedidos_bp = Blueprint("pedidos", __name__)
 
@@ -81,7 +81,8 @@ def put(id):
 @pedidos_bp.route('/pedidos/<int:id>', methods=["DELETE"])
 def delete(id):
     try:
-        return jsonify(eliminar(id)),200
+        eliminar(id)
+        return jsonify({"message":"Pedido eliminado con exito"}),200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:

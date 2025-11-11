@@ -1,6 +1,6 @@
 from pydantic import ValidationError
-from model.dto.ProductosDTO import ProductoSalidaDTO, ProductoEntradaDTO, ProductoUpdateDTO
-from model.productos_model import Producto, db
+from app.model.dto.ProductosDTO import ProductoSalidaDTO, ProductoEntradaDTO, ProductoUpdateDTO
+from app.model.productos_model import Producto, db
 
 # PARA EL METODO GET
 def listar(L_mostrar):
@@ -94,8 +94,11 @@ def editar(valor, request, by_id):
     try:
         # busco por id o por nombre
         producto = Producto.query.get(valor) if by_id else Producto.query.filter_by(nombre=valor).first()
-
         if not producto: raise ValueError("Producto no encontrado")
+
+        campos_validos = {"nombre", "precio", "stock", "categoria", "descripcion", "imagen_url", "mostrar"}
+        for clave in request.keys():
+            if clave not in campos_validos: raise ValueError(f"El atributo '{clave}' no existe en Producto.")
 
         dto = ProductoUpdateDTO(**request)
         if not any([dto.nombre, dto.precio, dto.stock, dto.categoria,

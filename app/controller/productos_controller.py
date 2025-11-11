@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from service.productos_service import editar, eliminar, listar, obtener, crear
+from app.service.productos_service import editar, eliminar, listar, obtener, crear
 
 productos_bp = Blueprint("productos", __name__)
 

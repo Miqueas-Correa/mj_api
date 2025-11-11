@@ -1,6 +1,6 @@
 from pydantic import ValidationError
-from model.dto.UsuariosDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, UsuarioUpdateDTO
-from model.usuarios_model import Usuario, db
+from app.model.dto.UsuariosDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, UsuarioUpdateDTO
+from app.model.usuarios_model import Usuario, db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # PARA EL METODO GET
@@ -26,13 +26,13 @@ def listar(L_activos):
         raise ValueError("Error al listar usuarios: " + str(e))
 
 # buscar usuario por id o por nombre
-def obtener(by_id, valor):
+def obtener_U(by_id, valor):
     try:
         if by_id:
             usuario = Usuario.query.get(valor)
             if not usuario: raise ValueError("Usuario no encontrado")
         else:
-            usuario = Usuario.query.filter_by(nombre=valor).all()
+            usuario = Usuario.query.filter_by(nombre=valor).first()
             if not usuario: raise ValueError("Usuario no encontrado")
         return UsuarioSalidaDTO.from_model(usuario).__dict__
     except ValueError as e:
@@ -59,9 +59,7 @@ def crear(request):
             nombre=dto.nombre,
             email=dto.email,
             telefono=dto.telefono,
-            contrasenia=generate_password_hash(dto.contrasenia)#,
-            # activo=dto.activo,
-            # rol=dto.rol
+            contrasenia=generate_password_hash(dto.contrasenia)
         )
 
         db.session.add(nuevo_usuario) # prepara la insercion
@@ -80,8 +78,12 @@ def editar(id, request, by_id):
         usuario = Usuario.query.get(id) if by_id else Usuario.query.filter_by(nombre=id).first()
         if not usuario: raise ValueError("Usuario no encontrado")
 
+        campos_validos = {"nombre", "email", "telefono", "contrasenia", "rol"}
+        for clave in request.keys():
+            if clave not in campos_validos: raise ValueError(f"El atributo '{clave}' no existe en Usuario.")
+
         dto = UsuarioUpdateDTO(**request)
-        if not any([dto.nombre, dto.email, dto.telefono, dto.contrasenia]):
+        if not any([dto.nombre, dto.email, dto.telefono, dto.contrasenia, dto.rol]):
             raise ValueError("No se proporcionaron datos para actualizar")
 
         modificado = False
@@ -109,6 +111,10 @@ def editar(id, request, by_id):
 
         if dto.contrasenia is not None:
             usuario.contrasenia = generate_password_hash(dto.contrasenia)
+            modificado = True
+
+        if dto.rol is not None:
+            usuario.rol = dto.rol
             modificado = True
 
         if not modificado:

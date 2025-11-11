@@ -1,4 +1,4 @@
-from model import db
+from app.model import db
 
 # Definición del modelo de productos
 class Producto(db.Model):
@@ -13,8 +13,7 @@ class Producto(db.Model):
     imagen_url = db.Column(db.String(200), nullable=False)
     mostrar = db.Column(db.Boolean, default=True)
 
-    # Relación con pedidos (uno a muchos)
-    pedidos = db.relationship("Pedido", back_populates="producto", lazy="select")
+    detalles = db.relationship("PedidoDetalle", back_populates="productos", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Producto {self.id} - {self.nombre} - ${self.precio}>"

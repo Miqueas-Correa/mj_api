@@ -3,7 +3,7 @@ from typing import Annotated, Optional
 import phonenumbers
 from phonenumbers import PhoneNumberFormat, PhoneNumberType
 from pydantic import BaseModel, EmailStr, Field, validator
-from model.usuarios_model import Usuario
+from app.model.usuarios_model import Usuario
 
 # DTO de ENTRADA
 class UsuarioEntradaDTO(BaseModel):
@@ -66,3 +66,4 @@ class UsuarioUpdateDTO(BaseModel):
     email: Optional[EmailStr] = None
     telefono: Optional[str] = Field(None, pattern=r"^\+?\d[\d\s\-]{7,19}$")
     contrasenia: Optional[str] = Field(None, min_length=6, max_length=100)
+    rol: Optional[str] = Field(None, pattern="^(cliente|admin)$")
