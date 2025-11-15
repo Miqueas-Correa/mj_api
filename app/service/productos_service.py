@@ -21,14 +21,12 @@ def listar(L_mostrar):
         raise ValueError("Error al listar productos: " + str(e))
 
 # buscar productos por id, por nombre o categoria
-# si by es 1 busca por id, si es 0 busca por nombre, si es 2 busca por categoria
 def obtener(by, valor, L_mostrar):
     try:
-        # si by no contiene 0,1 o 2 lanza error
         if by not in [0, 1, 2]: raise ValueError("Error en el parámetro 'by' debe ser 0, 1 o 2")
 
         if by == 1:
-            producto = Producto.query.get(valor)
+            producto = db.session.get(Producto, valor)
             if not producto: raise ValueError(f"Producto {valor} no fue encontrado")
             productos = [producto]
 
@@ -40,19 +38,14 @@ def obtener(by, valor, L_mostrar):
             productos = Producto.query.filter_by(categoria=valor).all()
             if not productos: raise ValueError(f"No se encontraron productos en la categoría '{valor}'")
 
-        # Filtrar según L_mostrar
         if L_mostrar is not None:
-            if L_mostrar.lower() not in ['true', 'false']:
-                raise ValueError("Error en el parámetro 'mostrar', debe ser 'true' o 'false'")
+            if L_mostrar.lower() not in ['true', 'false']: raise ValueError("Error en el parámetro 'mostrar', debe ser 'true' o 'false'")
 
             mostrar_activos = L_mostrar.lower() == 'true'
             productos = [p for p in productos if p.mostrar == mostrar_activos]
 
-            if not productos:
-                raise ValueError("No se encontraron productos que coincidan con el filtro 'mostrar'")
+            if not productos: raise ValueError("No se encontraron productos que coincidan con el filtro 'mostrar'")
 
-        # Convertir a DTOs
-        # Si hay uno solo, devolvemos el objeto directamente
         return [ProductoSalidaDTO.from_model(p).__dict__ for p in productos]
     except ValueError as e:
         raise ValueError(str(e))
@@ -63,11 +56,9 @@ def obtener(by, valor, L_mostrar):
 def crear(request):
     try:
         dto = ProductoEntradaDTO(**request)
-        # nombre unico
         if Producto.query.filter_by(nombre=dto.nombre).first():
             raise ValueError("Ya existe un producto con ese nombre")
 
-        # Si pasa, creo el producto
         nuevo_producto = Producto(
             nombre=dto.nombre,
             precio=dto.precio,
@@ -78,8 +69,8 @@ def crear(request):
             mostrar=dto.mostrar
         )
 
-        db.session.add(nuevo_producto) # prepara la insercion
-        db.session.commit() # ejecuta la insercion en la base de datos
+        db.session.add(nuevo_producto)
+        db.session.commit()
     except ValidationError as e:
         raise ValueError(f"Error de validación: {e.errors()}")
     except ValueError as e:
@@ -92,8 +83,7 @@ def crear(request):
 # PARA EL METODO PUT
 def editar(valor, request, by_id):
     try:
-        # busco por id o por nombre
-        producto = Producto.query.get(valor) if by_id else Producto.query.filter_by(nombre=valor).first()
+        producto = db.session.get(Producto, valor) if by_id else Producto.query.filter_by(nombre=valor).first()
         if not producto: raise ValueError("Producto no encontrado")
 
         campos_validos = {"nombre", "precio", "stock", "categoria", "descripcion", "imagen_url", "mostrar"}
@@ -106,25 +96,18 @@ def editar(valor, request, by_id):
             raise ValueError("No se proporcionaron datos para actualizar")
 
         modificado = False
-        # Actualizar los campos
+
         if dto.nombre is not None:
-            # Verificar si el nuevo nombre ya está en uso por otro
             if producto.nombre != dto.nombre and Producto.query.filter_by(nombre=dto.nombre).first():
                 raise ValueError("El nombre de usuario ya está registrado")
             producto.nombre = dto.nombre
             modificado = True
 
-        if dto.precio < 0:
-            raise ValueError("El precio no puede ser negativo")
-        else:
-            producto.precio = dto.precio
-            modificado = True
+        producto.precio = dto.precio
+        modificado = True
 
-        if dto.stock < 0:
-            raise ValueError("El stock no puede ser negativo")
-        else:
-            producto.stock = dto.stock
-            modificado = True
+        producto.stock = dto.stock
+        modificado = True
 
         if dto.categoria is not None:
             producto.categoria = dto.categoria
@@ -144,7 +127,7 @@ def editar(valor, request, by_id):
 
         if not modificado:
             raise ValueError("No se pudo modificar el producto")
-        # Guardar los cambios en la base de datos
+
         db.session.commit()
     except ValidationError as e:
         db.session.rollback()
@@ -153,14 +136,13 @@ def editar(valor, request, by_id):
         db.session.rollback()
         raise
     except Exception as e:
-        db.session.rollback()  # Revertir cambios en caso de error
+        db.session.rollback()
         raise ValueError("Error al modificar el producto: " + str(e))
 
 # PARA EL METODO DELETE
 def eliminar(valor, by_id):
     try:
-        # busco por id o por nombre
-        producto = Producto.query.get(valor) if by_id else Producto.query.filter_by(nombre=valor).first()
+        producto = db.session.get(Producto, valor) if by_id else Producto.query.filter_by(nombre=valor).first()
         if not producto: raise ValueError("Producto no encontrado")
         db.session.delete(producto)
         db.session.commit()
@@ -169,5 +151,5 @@ def eliminar(valor, by_id):
         db.session.rollback()
         raise
     except Exception as e:
-        db.session.rollback()  # Revertir cambios en caso de error
+        db.session.rollback()
         raise ValueError("Error al eliminar el producto: " + str(e))

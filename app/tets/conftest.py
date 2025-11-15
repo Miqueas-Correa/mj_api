@@ -1,6 +1,7 @@
 import pytest
 from app.app import create_app
 from app.model.dto.UsuariosDTO import validar_telefono_ar
+from app.model.productos_model import Producto
 from app.model.usuarios_model import db, Usuario
 from werkzeug.security import generate_password_hash
 
@@ -22,13 +23,14 @@ def app():
 
 @pytest.fixture(scope="function")
 def app_context(app):
-    """Crea y limpia el contexto de aplicación para cada test"""
+    # Crea y limpia el contexto de aplicación para cada test
     with app.app_context():
         yield
 
+# USUARIOS
 @pytest.fixture
 def sample_user(app):
-    user = Usuario(
+    usuario = Usuario(
         nombre="mike",
         email="mike@test.com",
         telefono=validar_telefono_ar("1123456789"),
@@ -36,6 +38,22 @@ def sample_user(app):
         activo=True,
         rol="cliente"
     )
-    db.session.add(user)
+    db.session.add(usuario)
     db.session.commit()
-    return user
+    return usuario
+
+# PRODUCTOS
+@pytest.fixture(scope="function")
+def sample_product(app_context):
+    producto = Producto(
+        nombre="TestProducto",
+        precio=100.0,
+        stock=10,
+        categoria="Categoria1",
+        descripcion="Descripción de prueba",
+        imagen_url="http://imagen.com/test.jpg",
+        mostrar=True
+    )
+    db.session.add(producto)
+    db.session.commit()
+    return producto
