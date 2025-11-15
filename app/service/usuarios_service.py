@@ -75,7 +75,7 @@ def crear(request):
 def editar(id, request, by_id):
     try:
         # busco por id o por nombre
-        usuario = Usuario.query.get(id) if by_id else Usuario.query.filter_by(nombre=id).first()
+        usuario = db.session.get(Usuario, id) if by_id else Usuario.query.filter_by(nombre=id).first()  # <-- cambio aquí
         if not usuario: raise ValueError("Usuario no encontrado")
 
         campos_validos = {"nombre", "email", "telefono", "contrasenia", "rol"}
@@ -133,7 +133,7 @@ def editar(id, request, by_id):
 def check_password(nombre_id, contrasenia, by_id):
     try:
         # busco el usuario por id o por nombre
-        usuario = Usuario.query.get(nombre_id) if by_id else Usuario.query.filter_by(nombre=nombre_id).first()
+        usuario = db.session.get(Usuario, nombre_id) if by_id else Usuario.query.filter_by(nombre=nombre_id).first()  # <-- cambio aquí
         if not usuario or usuario.activo == False:
             raise ValueError("Usuario no encontrado")
         if not check_password_hash(usuario.contrasenia, contrasenia):
@@ -148,7 +148,7 @@ def check_password(nombre_id, contrasenia, by_id):
 def eliminar(valor, by_id):
     try:
         # busco el usuario por id o por nombre
-        usuario = Usuario.query.get(valor) if by_id else Usuario.query.filter_by(nombre=valor).first()
+        usuario = db.session.get(Usuario, valor) if by_id else Usuario.query.filter_by(nombre=valor).first()  # <-- cambio aquí
         if not usuario or usuario.activo == False: raise ValueError("Usuario no encontrado")
         usuario.activo = False
         db.session.commit()
