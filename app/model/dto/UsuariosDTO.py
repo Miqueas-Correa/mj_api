@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Annotated, Optional
 import phonenumbers
 from phonenumbers import PhoneNumberFormat, PhoneNumberType
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.model.usuarios_model import Usuario
 
 # DTO de ENTRADA
@@ -14,7 +14,7 @@ class UsuarioEntradaDTO(BaseModel):
     # activo: bool = True
     # rol: Annotated[str, Field(pattern="^(cliente|admin)$")]
 
-    @validator("telefono")
+    @field_validator("telefono")
     def validar_telefono(cls, v):
         return validar_telefono_ar(v)
 
