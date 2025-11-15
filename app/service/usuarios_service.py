@@ -29,7 +29,7 @@ def listar(L_activos):
 def obtener_U(by_id, valor):
     try:
         if by_id:
-            usuario = Usuario.query.get(valor)
+            usuario = db.session.get(Usuario, valor)
             if not usuario: raise ValueError("Usuario no encontrado")
         else:
             usuario = Usuario.query.filter_by(nombre=valor).first()
@@ -75,12 +75,13 @@ def crear(request):
 def editar(id, request, by_id):
     try:
         # busco por id o por nombre
-        usuario = db.session.get(Usuario, id) if by_id else Usuario.query.filter_by(nombre=id).first()  # <-- cambio aquí
+        usuario = db.session.get(Usuario, id) if by_id else Usuario.query.filter_by(nombre=id).first()
         if not usuario: raise ValueError("Usuario no encontrado")
 
         campos_validos = {"nombre", "email", "telefono", "contrasenia", "rol"}
         for clave in request.keys():
-            if clave not in campos_validos: raise ValueError(f"El atributo '{clave}' no existe en Usuario.")
+            if clave not in campos_validos: 
+                raise ValueError(f"El atributo '{clave}' no existe en Usuario.")
 
         dto = UsuarioUpdateDTO(**request)
         if not any([dto.nombre, dto.email, dto.telefono, dto.contrasenia, dto.rol]):
@@ -89,21 +90,18 @@ def editar(id, request, by_id):
         modificado = False
         # Actualizar los campos del usuario
         if dto.nombre is not None:
-            # Verificar si el nuevo nombre de usuario ya está en uso por otro usuario
             if usuario.nombre != dto.nombre and Usuario.query.filter_by(nombre=dto.nombre).first():
                 raise ValueError("El nombre de usuario ya está registrado")
             usuario.nombre = dto.nombre
             modificado = True
 
         if dto.email is not None:
-            # Verifico si el nuevo email ya está en uso por otro usuario
             if usuario.email != dto.email and Usuario.query.filter_by(email=dto.email).first():
                 raise ValueError("El email ya está registrado")
             usuario.email = dto.email
             modificado = True
 
         if dto.telefono is not None:
-            # Verifico si el nuevo telefono ya está en uso por otro usuario
             if usuario.telefono != dto.telefono and Usuario.query.filter_by(telefono=dto.telefono).first():
                 raise ValueError("El teléfono ya está registrado")
             usuario.telefono = dto.telefono
@@ -128,12 +126,10 @@ def editar(id, request, by_id):
     except Exception as e:
         raise ValueError("Error al modificar el usuario: " + str(e))
 
-# PARA EL METODO POST DE COMPROBAR CONTRASEÑA, el metodo no funciona si la contrasenia
-# no esta hasheada
+# PARA EL METODO POST DE COMPROBAR CONTRASEÑA
 def check_password(nombre_id, contrasenia, by_id):
     try:
-        # busco el usuario por id o por nombre
-        usuario = db.session.get(Usuario, nombre_id) if by_id else Usuario.query.filter_by(nombre=nombre_id).first()  # <-- cambio aquí
+        usuario = db.session.get(Usuario, nombre_id) if by_id else Usuario.query.filter_by(nombre=nombre_id).first()
         if not usuario or usuario.activo == False:
             raise ValueError("Usuario no encontrado")
         if not check_password_hash(usuario.contrasenia, contrasenia):
@@ -147,9 +143,9 @@ def check_password(nombre_id, contrasenia, by_id):
 # PARA EL METODO DELETE
 def eliminar(valor, by_id):
     try:
-        # busco el usuario por id o por nombre
-        usuario = db.session.get(Usuario, valor) if by_id else Usuario.query.filter_by(nombre=valor).first()  # <-- cambio aquí
-        if not usuario or usuario.activo == False: raise ValueError("Usuario no encontrado")
+        usuario = db.session.get(Usuario, valor) if by_id else Usuario.query.filter_by(nombre=valor).first()
+        if not usuario or usuario.activo == False: 
+            raise ValueError("Usuario no encontrado")
         usuario.activo = False
         db.session.commit()
         return {"message": "Usuario eliminado exitosamente"}

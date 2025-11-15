@@ -1,7 +1,6 @@
 # configuracion (desarrollo, produccion, testing)
 import os
 from dotenv import load_dotenv
-
 # Cargar las variables de .env
 load_dotenv()
 
@@ -22,3 +21,8 @@ class Config:
     # Otras configuraciones de Flask
     ENV = os.getenv("FLASK_ENV", "production")
     DEBUG = ENV == "development"
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"  # Base de datos temporal
+    DEBUG = False
