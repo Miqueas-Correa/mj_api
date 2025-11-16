@@ -1,6 +1,20 @@
 import pytest
 from app.model.usuarios_model import db, Usuario
 from app.service.usuarios_service import listar, obtener_U, crear, editar, check_password, eliminar
+"""
+Pruebas unitarias para el servicio de usuarios.
+Este módulo contiene pruebas para las funciones del servicio de usuarios, incluyendo:
+- listar: Listado de usuarios activos/inactivos y manejo de parámetros inválidos o sin resultados.
+- obtener_U: Obtención de usuario por ID o nombre, y manejo de usuario inexistente.
+- crear: Creación de usuarios, validación de unicidad de email, teléfono y nombre.
+- editar: Edición de atributos de usuario, validación de unicidad, atributos inexistentes, sin cambios y usuario inexistente.
+- check_password: Verificación de contraseña correcta, incorrecta y usuario inactivo.
+- eliminar: Eliminación lógica de usuario, manejo de usuario inexistente o ya inactivo.
+Fixtures requeridas:
+- app_context: Contexto de aplicación para pruebas.
+- sample_user: Usuario de ejemplo para pruebas.
+Las pruebas verifican tanto los casos exitosos como los errores esperados mediante el uso de pytest.raises.
+"""
 
 # TESTS PARA listar()
 def test_listar_activos(app_context, sample_user):

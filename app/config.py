@@ -1,6 +1,18 @@
 # configuracion (desarrollo, produccion, testing)
 import os
 from dotenv import load_dotenv
+"""
+Módulo de configuración para la aplicación Flask.
+Este módulo carga variables de entorno desde un archivo .env y define clases de configuración
+para diferentes entornos (desarrollo, producción, testing).
+Clases:
+    Config:
+        Configuración base para la aplicación, incluyendo parámetros de conexión a la base de datos
+        MySQL, URI de SQLAlchemy y opciones generales de Flask.
+    TestingConfig(Config):
+        Configuración específica para pruebas, utilizando una base de datos SQLite en memoria
+        y habilitando el modo de testing.
+"""
 # Cargar las variables de .env
 load_dotenv()
 

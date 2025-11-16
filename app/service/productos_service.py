@@ -2,6 +2,54 @@ from pydantic import ValidationError
 from app.model.dto.ProductosDTO import ProductoSalidaDTO, ProductoEntradaDTO, ProductoUpdateDTO
 from app.model.productos_model import Producto, db
 
+"""
+Módulo de servicios para la gestión de productos.
+Funciones:
+----------
+listar(L_mostrar):
+    Lista los productos según el filtro de visibilidad ('mostrar').
+    Parámetros:
+        L_mostrar (str | None): Si es 'true', lista solo productos visibles; si es 'false', solo los no visibles; si es None, lista todos.
+    Retorna:
+        Lista de diccionarios con los datos de los productos.
+    Excepciones:
+        ValueError: Si el parámetro 'mostrar' es inválido o ocurre un error al listar.
+obtener(by, valor, L_mostrar):
+    Busca productos por ID, nombre o categoría, con opción de filtrar por visibilidad.
+    Parámetros:
+        by (int): 0 para buscar por nombre, 1 por ID, 2 por categoría.
+        valor (str | int): Valor de búsqueda (nombre, id o categoría).
+        L_mostrar (str | None): Filtro de visibilidad ('true' o 'false').
+    Retorna:
+        Lista de diccionarios con los datos de los productos encontrados.
+    Excepciones:
+        ValueError: Si los parámetros son inválidos o no se encuentran productos.
+crear(request):
+    Crea un nuevo producto a partir de los datos proporcionados.
+    Parámetros:
+        request (dict): Datos del producto a crear.
+    Excepciones:
+        ValueError: Si los datos son inválidos o ya existe un producto con el mismo nombre.
+        RuntimeError: Si ocurre un error inesperado al crear el producto.
+editar(valor, request, by_id):
+    Edita los datos de un producto existente, identificado por ID o nombre.
+    Parámetros:
+        valor (str | int): ID o nombre del producto a editar.
+        request (dict): Datos a actualizar.
+        by_id (bool): True si 'valor' es un ID, False si es un nombre.
+    Excepciones:
+        ValueError: Si los datos son inválidos, el producto no existe o no se pudo modificar.
+eliminar(valor, by_id):
+    Elimina un producto identificado por ID o nombre.
+    Parámetros:
+        valor (str | int): ID o nombre del producto a eliminar.
+        by_id (bool): True si 'valor' es un ID, False si es un nombre.
+    Retorna:
+        dict: Mensaje de éxito.
+    Excepciones:
+        ValueError: Si el producto no existe o ocurre un error al eliminar.
+"""
+
 # PARA EL METODO GET
 def listar(L_mostrar):
     try:

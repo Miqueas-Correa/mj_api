@@ -5,6 +5,41 @@ from phonenumbers import PhoneNumberFormat, PhoneNumberType
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.model.usuarios_model import Usuario
 
+"""
+Este módulo define los Data Transfer Objects (DTO) para la entidad Usuario en la API.
+Clases:
+--------
+UsuarioEntradaDTO(BaseModel):
+    DTO de entrada para la creación de usuarios. Valida los campos:
+        - nombre: str (longitud entre 2 y 50 caracteres)
+        - email: EmailStr (correo electrónico válido)
+        - telefono: str (valida formato argentino, debe ser móvil)
+        - contrasenia: str (longitud entre 6 y 100 caracteres)
+    Incluye un validador personalizado para el campo 'telefono'.
+UsuarioSalidaDTO:
+    DTO de salida para representar usuarios. Evita exponer la contraseña.
+    Campos:
+        - id: int
+        - nombre: str
+        - email: str
+        - telefono: str
+        - activo: bool
+        - rol: str
+    Incluye método de clase 'from_model' para construir el DTO desde una instancia de Usuario.
+UsuarioUpdateDTO(BaseModel):
+    DTO para la actualización parcial de usuarios. Todos los campos son opcionales:
+        - nombre: str (opcional, longitud entre 2 y 50)
+        - email: EmailStr (opcional)
+        - telefono: str (opcional, patrón de teléfono internacional)
+        - contrasenia: str (opcional, longitud entre 6 y 100)
+        - rol: str (opcional, debe ser 'cliente' o 'admin')
+Funciones:
+----------
+validar_telefono_ar(valor: str) -> str:
+    Valida y normaliza un número de teléfono argentino. Asegura que sea un número móvil válido
+    y lo retorna en formato E.164. Lanza ValueError si el número no es válido.
+"""
+
 # DTO de ENTRADA
 class UsuarioEntradaDTO(BaseModel):
     nombre: Annotated[str, Field(min_length=2, max_length=50)]

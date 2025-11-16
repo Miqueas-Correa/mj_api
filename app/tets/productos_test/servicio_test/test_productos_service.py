@@ -1,6 +1,21 @@
 import pytest
 from app.service.productos_service import listar, obtener, crear, editar, eliminar
 from app.model.productos_model import db, Producto
+"""
+Este módulo contiene pruebas unitarias para el servicio de productos de la aplicación.
+Funciones testeadas:
+- listar(): Prueba la obtención de productos según diferentes parámetros de visibilidad y manejo de errores por parámetros inválidos.
+- obtener(): Prueba la obtención de productos por id, nombre o categoría, así como el manejo de errores cuando no se encuentra el producto o se pasa un parámetro inválido.
+- crear(): Prueba la creación de un nuevo producto y la validación de unicidad del nombre.
+- editar(): Prueba la edición de productos existentes, validando campos permitidos y restricciones de negocio como valores negativos o campos inexistentes.
+- eliminar(): Prueba la eliminación de productos y el manejo de errores cuando el producto no existe.
+Fixtures utilizados:
+- app_context: Contexto de aplicación para pruebas con la base de datos.
+- sample_product: Producto de ejemplo para pruebas.
+Excepciones verificadas:
+- ValueError: Para parámetros inválidos, productos no encontrados, nombres repetidos y errores de validación.
+Cada prueba valida el comportamiento esperado de las funciones del servicio de productos, asegurando la integridad y robustez de la lógica de negocio.
+"""
 
 # TEST listar()
 def test_listar_todos(app_context, sample_product):

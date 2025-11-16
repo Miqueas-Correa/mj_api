@@ -4,6 +4,30 @@ from app.service.productos_service import editar, eliminar, listar, obtener, cre
 
 productos_bp = Blueprint("productos", __name__)
 
+"""
+Controlador de productos para la API de Flask.
+Este módulo define las rutas y controladores relacionados con la gestión de productos,
+incluyendo operaciones de listado, búsqueda, creación, edición y eliminación de productos.
+Rutas:
+- GET /productos: Lista todos los productos, con opción de filtrar por disponibilidad en stock.
+- GET /productos/<string:nombre>: Busca un producto por su nombre.
+- GET /productos/<int:id>: Busca un producto por su ID.
+- GET /productos/categoria/<string:categoria>: Busca productos por categoría.
+- POST /productos: Crea un nuevo producto.
+- PUT /productos/<int:id>: Modifica un producto existente por su ID.
+- PUT /productos/<string:nombre>: Modifica un producto existente por su nombre.
+- DELETE /productos/<int:id>: Elimina un producto por su ID.
+- DELETE /productos/<string:nombre>: Elimina un producto por su nombre.
+Excepciones manejadas:
+- ValueError: Errores de validación de datos o recursos no encontrados.
+- ValidationError: Errores de validación de datos de entrada (Pydantic).
+- Exception: Errores internos del servidor.
+Dependencias:
+- Flask (Blueprint, request, jsonify)
+- Pydantic (ValidationError)
+- app.service.productos_service (editar, eliminar, listar, obtener, crear)
+"""
+
 # Listar Productos
 @productos_bp.route("/productos", methods=["GET"])
 def get():

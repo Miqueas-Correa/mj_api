@@ -4,6 +4,29 @@ from app.service.usuarios_service import check_password, eliminar, listar, obten
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
+
+"""
+Controlador de usuarios para la API de Flask.
+Este módulo define las rutas relacionadas con la gestión de usuarios, incluyendo operaciones para listar, buscar, crear, modificar, comprobar contraseñas y eliminar usuarios. Utiliza servicios definidos en `usuarios_service` para la lógica de negocio y maneja errores comunes devolviendo respuestas JSON apropiadas.
+Rutas:
+- GET    /usuarios                      : Lista todos los usuarios, con opción de filtrar por activos.
+- GET    /usuarios/<string:nombre>      : Obtiene un usuario por su nombre.
+- GET    /usuarios/<int:id>             : Obtiene un usuario por su ID.
+- POST   /usuarios                      : Crea un nuevo usuario.
+- POST   /usuarios/comprobar/<string:nombre> : Comprueba la contraseña de un usuario por nombre.
+- POST   /usuarios/comprobar/<int:id>        : Comprueba la contraseña de un usuario por ID.
+- PUT    /usuarios/<int:id>             : Modifica los datos de un usuario por ID.
+- PUT    /usuarios/<string:nombre>      : Modifica los datos de un usuario por nombre.
+- DELETE /usuarios/<int:id>             : Elimina (inhabilita) un usuario por ID.
+- DELETE /usuarios/<string:nombre>      : Elimina (inhabilita) un usuario por nombre.
+Manejo de errores:
+- Devuelve errores de validación, errores de datos faltantes o incorrectos, y errores internos del servidor en formato JSON.
+Dependencias:
+- Flask (Blueprint, request, jsonify)
+- Pydantic (ValidationError)
+- app.service.usuarios_service (check_password, eliminar, listar, obtener_U, crear, editar)
+"""
+
 # Listar todos los usuarios
 @usuarios_bp.route("/usuarios", methods=["GET"])
 def get():

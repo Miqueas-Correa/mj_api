@@ -3,6 +3,62 @@ from app.model.dto.UsuariosDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, Usuar
 from app.model.usuarios_model import Usuario, db
 from werkzeug.security import generate_password_hash, check_password_hash
 
+"""
+Módulo de servicios para la gestión de usuarios.
+Funciones:
+----------
+listar(L_activos):
+    Lista los usuarios del sistema, filtrando por activos o inactivos si se especifica.
+    Parámetros:
+        L_activos (str | None): 'true' para activos, 'false' para inactivos, None para todos.
+    Retorna:
+        Lista de diccionarios con los datos de los usuarios.
+    Excepciones:
+        ValueError: Si el parámetro es inválido o no se encuentran usuarios.
+obtener_U(by_id, valor):
+    Obtiene un usuario por ID o por nombre.
+    Parámetros:
+        by_id (bool): True para buscar por ID, False para buscar por nombre.
+        valor (int | str): ID o nombre del usuario.
+    Retorna:
+        Diccionario con los datos del usuario.
+    Excepciones:
+        ValueError: Si no se encuentra el usuario.
+crear(request):
+    Crea un nuevo usuario en el sistema.
+    Parámetros:
+        request (dict): Datos del usuario a crear.
+    Excepciones:
+        ValueError: Si hay errores de validación o datos duplicados.
+editar(id, request, by_id):
+    Edita los datos de un usuario existente.
+    Parámetros:
+        id (int | str): ID o nombre del usuario a editar.
+        request (dict): Datos a actualizar.
+        by_id (bool): True para buscar por ID, False para buscar por nombre.
+    Excepciones:
+        ValueError: Si hay errores de validación, datos duplicados o no se encuentra el usuario.
+check_password(nombre_id, contrasenia, by_id):
+    Verifica la contraseña de un usuario.
+    Parámetros:
+        nombre_id (int | str): ID o nombre del usuario.
+        contrasenia (str): Contraseña a verificar.
+        by_id (bool): True para buscar por ID, False para buscar por nombre.
+    Retorna:
+        True si la contraseña es correcta.
+    Excepciones:
+        ValueError: Si el usuario no existe, está inactivo o la contraseña es incorrecta.
+eliminar(valor, by_id):
+    Marca un usuario como inactivo (eliminación lógica).
+    Parámetros:
+        valor (int | str): ID o nombre del usuario.
+        by_id (bool): True para buscar por ID, False para buscar por nombre.
+    Retorna:
+        dict: Mensaje de éxito.
+    Excepciones:
+        ValueError: Si el usuario no existe o está inactivo.
+"""
+
 # PARA EL METODO GET
 def listar(L_activos):
     try:

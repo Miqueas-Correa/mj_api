@@ -2,6 +2,20 @@ from dataclasses import dataclass
 from typing import Annotated, Optional
 from pydantic import BaseModel, Field
 
+"""
+DTOs para la gestión de productos en la API.
+Clases:
+    ProductoEntradaDTO:
+        Modelo de entrada para crear un producto.
+        Valida los campos requeridos como nombre, precio, stock, categoría, descripción, imagen_url y mostrar.
+    ProductoSalidaDTO:
+        Modelo de salida para representar un producto con todos sus atributos, incluyendo el id.
+        Incluye un método de clase 'from_model' para construir la instancia a partir de un modelo de producto.
+    ProductoUpdateDTO:
+        Modelo para actualizar parcialmente un producto.
+        Todos los campos son opcionales y tienen validaciones de longitud y valores mínimos/máximos.
+"""
+
 class ProductoEntradaDTO(BaseModel):
     nombre: Annotated[str, Field(min_length=1, max_length=100)]
     precio: Annotated[float, Field(gt=0)]

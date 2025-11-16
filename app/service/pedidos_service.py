@@ -5,6 +5,49 @@ from app.model.productos_model import Producto
 from app.model import db
 from app.service.usuarios_service import obtener_U
 
+"""
+Módulo de servicio para la gestión de pedidos.
+Funciones:
+----------
+- listar(L_cerrado):
+    Lista todos los pedidos o los filtra según el estado de cerrado.
+    Parámetros:
+        L_cerrado (str | None): Filtra los pedidos por su estado de cerrado ('true' o 'false').
+    Retorna:
+        Lista de diccionarios con la información de los pedidos y sus detalles.
+    Excepciones:
+        ValueError: Si hay un error en los parámetros o no se encuentran pedidos.
+- obtener(by, valor, L_cerrado):
+    Obtiene pedidos filtrados por ID de usuario, ID de pedido o producto en los detalles.
+    Parámetros:
+        by (int): 0 para usuario, 1 para pedido, 2 para producto.
+        valor (str/int): Valor a buscar según el filtro.
+        L_cerrado (str | None): Filtra por estado de cerrado ('true' o 'false').
+    Retorna:
+        Lista de diccionarios con la información de los pedidos y sus detalles.
+    Excepciones:
+        ValueError: Si hay un error en los parámetros o no se encuentran pedidos.
+- crear(data):
+    Crea un nuevo pedido con los productos especificados.
+    Parámetros:
+        data (dict): Diccionario con 'id_usuario' y lista de productos (cada uno con 'producto_id' y 'cantidad').
+    Excepciones:
+        ValueError: Si hay un error al crear el pedido o algún producto no existe.
+- editar(pedido_id, request):
+    Edita un pedido existente, permitiendo modificar usuario, estado de cerrado y detalles.
+    Parámetros:
+        pedido_id (int): ID del pedido a modificar.
+        request (dict): Diccionario con los campos a actualizar ('id_usuario', 'cerrado', 'detalles').
+    Excepciones:
+        ValueError: Si hay errores de validación, el pedido no existe o los datos son inválidos.
+- eliminar(pedido_id):
+    Elimina un pedido existente por su ID.
+    Parámetros:
+        pedido_id (int): ID del pedido a eliminar.
+    Excepciones:
+        ValueError: Si el pedido no existe o ocurre un error al eliminar.
+"""
+
 # GET - Listar todos o filtrados
 def listar(L_cerrado):
     try:

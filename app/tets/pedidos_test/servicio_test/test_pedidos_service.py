@@ -2,6 +2,22 @@ import pytest
 from app.model.pedidos_model import Pedido, db
 from app.service.pedidos_service import listar, crear, editar, eliminar, obtener
 
+"""
+Este módulo contiene pruebas unitarias para el servicio de pedidos de la aplicación.
+Funciones testeadas:
+- listar(): Prueba la obtención de pedidos según diferentes parámetros, incluyendo casos de éxito y error.
+- obtener(): Prueba la obtención de pedidos por ID, usuario, producto y manejo de errores por parámetros inválidos o inexistentes.
+- crear(): Prueba la creación de pedidos, incluyendo el cálculo del total y manejo de productos inválidos.
+- editar(): Prueba la edición de pedidos, tanto el cierre como la modificación de detalles, y el manejo de pedidos inexistentes.
+- eliminar(): Prueba la eliminación de pedidos y el manejo de intentos de eliminar pedidos inexistentes.
+Fixtures utilizados:
+- app_context: Contexto de aplicación para las pruebas.
+- sample_pedido: Pedido de ejemplo para pruebas.
+- sample_user: Usuario de ejemplo para pruebas.
+- sample_product: Producto de ejemplo para pruebas.
+Las pruebas verifican tanto el comportamiento esperado como el manejo adecuado de errores mediante excepciones.
+"""
+
 # Tests listar()
 def test_listar_todos(app_context, sample_pedido):
     res = listar(None)

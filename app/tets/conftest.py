@@ -5,6 +5,23 @@ from app.model.pedidos_model import Pedido, PedidoDetalle
 from app.model.productos_model import Producto
 from app.model.usuarios_model import db, Usuario
 from werkzeug.security import generate_password_hash
+"""
+Este módulo define fixtures de pytest para pruebas unitarias en la aplicación Flask.
+Clases:
+    TestingConfig: Configuración de prueba para la base de datos y la aplicación.
+Fixtures:
+    app:
+        Crea una instancia de la aplicación Flask con configuración de prueba.
+        Inicializa y elimina la base de datos en memoria antes y después de cada test.
+    app_context:
+        Proporciona un contexto de aplicación para cada test, asegurando el correcto manejo de recursos.
+    sample_user:
+        Crea y retorna un usuario de ejemplo en la base de datos para pruebas relacionadas a usuarios.
+    sample_product:
+        Crea y retorna un producto de ejemplo en la base de datos para pruebas relacionadas a productos.
+    sample_pedido:
+        Crea y retorna un pedido de ejemplo, asociado a un usuario y un producto, para pruebas relacionadas a pedidos.
+"""
 
 class TestingConfig:
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
