@@ -47,7 +47,7 @@ def obtener(by, valor, L_cerrado):
         if by not in [0, 1, 2]: raise ValueError("Error en el parámetro 'by': debe ser 0, 1 o 2")
 
         if by == 1:  # por ID de pedido
-            pedido = Pedido.query.get(valor)
+            pedido = db.session.get(Pedido, valor)
             if not pedido: raise ValueError(f"Pedido {valor} no encontrado")
             pedidos = [pedido]
 
@@ -101,7 +101,7 @@ def crear(data):
         total = 0
 
         for item in productos_data:
-            producto = Producto.query.get(item["producto_id"])
+            producto = db.session.get(Producto, item["producto_id"])
             if not producto:
                 raise ValueError(f"Producto {item['producto_id']} no encontrado")
 
@@ -125,7 +125,7 @@ def crear(data):
 # PUT - Editar pedido existente
 def editar(pedido_id, request):
     try:
-        pedido = Pedido.query.get(pedido_id)
+        pedido = db.session.get(Pedido, pedido_id)
         if not pedido: raise ValueError("Pedido no encontrado")
 
         campos_validos = {"id_usuario", "cerrado", "detalles"}
@@ -150,7 +150,7 @@ def editar(pedido_id, request):
 
         if dto.detalles is not None:
             for item in dto.detalles:
-                producto = Producto.query.get(item.producto_id)
+                producto = db.session.get(Producto, item.producto_id)
                 if not producto:
                     raise ValueError(f"Producto {item.producto_id} no encontrado")
 
@@ -184,7 +184,7 @@ def editar(pedido_id, request):
 # DELETE - Eliminar pedido
 def eliminar(pedido_id):
     try:
-        pedido = Pedido.query.get(pedido_id)
+        pedido = db.session.get(Pedido, pedido_id)
         if not pedido: raise ValueError("Pedido no encontrado")
 
         db.session.delete(pedido)

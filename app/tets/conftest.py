@@ -1,6 +1,7 @@
 import pytest
 from app.app import create_app
 from app.model.dto.UsuariosDTO import validar_telefono_ar
+from app.model.pedidos_model import Pedido, PedidoDetalle
 from app.model.productos_model import Producto
 from app.model.usuarios_model import db, Usuario
 from werkzeug.security import generate_password_hash
@@ -57,3 +58,13 @@ def sample_product(app_context):
     db.session.add(producto)
     db.session.commit()
     return producto
+
+# PEDIDOS
+@pytest.fixture
+def sample_pedido(app_context, sample_user, sample_product):
+    pedido = Pedido(id_usuario=sample_user.id, total=100)
+    detalle = PedidoDetalle(producto_id=sample_product.id, cantidad=1)
+    pedido.detalles.append(detalle)
+    db.session.add(pedido)
+    db.session.commit()
+    return pedido

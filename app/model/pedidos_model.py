@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from app.model import db
 
 """
@@ -30,7 +30,7 @@ class Pedido(db.Model):
     __tablename__ = "pedidos"
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
-    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     total = db.Column(db.Float, nullable=False)
     cerrado = db.Column(db.Boolean, default=False)
 
