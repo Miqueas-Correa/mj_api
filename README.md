@@ -52,7 +52,7 @@
 
 1. Inicia la aplicación:
      ```bash
-     flask run
+     flask --app app.app:create_app run
      ```
 2. Accede a la API en `http://localhost:5000/`.
 
