@@ -38,7 +38,7 @@
 2. Crea un entorno virtual (opcional pero recomendado):
      ```bash
      python -m venv venv
-     source venv/bin/activate  # En Windows: venv\Scripts\activate
+     source venv/bin/activate  # En Windows: .venv\Scripts\Activate.ps1
      ```
 
 3. Instala las dependencias:
