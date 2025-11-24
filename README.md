@@ -24,6 +24,7 @@
 - Validación de datos y manejo de errores.
 - Arquitectura modular y escalable.
 - Documentación clara de endpoints y ejemplos de uso.
+- Uso de cookies
 
 ---
 
