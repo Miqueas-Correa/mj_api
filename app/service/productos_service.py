@@ -24,6 +24,11 @@ obtener(by, valor, L_mostrar):
         Lista de diccionarios con los datos de los productos encontrados.
     Excepciones:
         ValueError: Si los parámetros son inválidos o no se encuentran productos.
+categorias_list():
+    Obtiene una lista de todas las categorías distintas de productos.
+        Ninguno.
+        Lista de strings con los nombres de las categorías.
+        ValueError: Si ocurre un error al listar las categorías.
 crear(request):
     Crea un nuevo producto a partir de los datos proporcionados.
     Parámetros:
@@ -100,6 +105,14 @@ def obtener(by, valor, L_mostrar):
     except Exception as e:
         raise ValueError("Error al listar productos: " + str(e))
 
+# buscar todas las categorias de los productos
+def categorias_list():
+    try:
+        categorias = db.session.query(Producto.categoria).distinct().all()
+        return [c[0] for c in categorias] if categorias is not None else []
+    except Exception as e:
+        raise ValueError("Error al listar categorías: " + str(e))
+
 # PARA EL METODO POST
 def crear(request):
     try:
@@ -147,15 +160,17 @@ def editar(valor, request, by_id):
 
         if dto.nombre is not None:
             if producto.nombre != dto.nombre and Producto.query.filter_by(nombre=dto.nombre).first():
-                raise ValueError("El nombre de usuario ya está registrado")
+                raise ValueError("El nombre del producto ya está registrado")
             producto.nombre = dto.nombre
             modificado = True
 
-        producto.precio = dto.precio
-        modificado = True
+        if dto.precio is not None:
+            producto.precio = dto.precio
+            modificado = True
 
-        producto.stock = dto.stock
-        modificado = True
+        if dto.stock is not None:
+            producto.stock = dto.stock
+            modificado = True
 
         if dto.categoria is not None:
             producto.categoria = dto.categoria

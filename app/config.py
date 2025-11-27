@@ -29,7 +29,7 @@ class Config:
 
     # CORS Config
     # Lista separada por coma → se convierte a python list
-    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").split(",")
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
     CORS_SUPPORTS_CREDENTIALS = True
 

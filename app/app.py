@@ -19,7 +19,7 @@ Ejecución directa:
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    origins = app.config["CORS_ORIGINS"]
+    origins = app.config.get("CORS_ORIGINS", ["*"])
 
     CORS(
         app,

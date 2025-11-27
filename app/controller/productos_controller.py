@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from app.service.productos_service import editar, eliminar, listar, obtener, crear
+from app.service.productos_service import editar, eliminar, listar, obtener, crear, categorias_list
 
 productos_bp = Blueprint("productos", __name__)
 
@@ -13,6 +13,7 @@ Rutas:
 - GET /productos/<string:nombre>: Busca un producto por su nombre.
 - GET /productos/<int:id>: Busca un producto por su ID.
 - GET /productos/categoria/<string:categoria>: Busca productos por categoría.
+- GET /productos/categorias: Obtiene la lista de todas las categorías de productos.
 - POST /productos: Crea un nuevo producto.
 - PUT /productos/<int:id>: Modifica un producto existente por su ID.
 - PUT /productos/<string:nombre>: Modifica un producto existente por su nombre.
@@ -25,7 +26,7 @@ Excepciones manejadas:
 Dependencias:
 - Flask (Blueprint, request, jsonify)
 - Pydantic (ValidationError)
-- app.service.productos_service (editar, eliminar, listar, obtener, crear)
+- app.service.productos_service (editar, eliminar, listar, obtener, crear, categorias_list)
 """
 
 # Listar Productos
@@ -68,6 +69,16 @@ def get_category(categoria):
     try:
         L_mostrar = request.args.get("mostrar", default=None, type=str)
         return jsonify(obtener(2, categoria, L_mostrar)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
+
+# buscar todas las categorias de los productos
+@productos_bp.route("/productos/categorias", methods=["GET"])
+def get_all_categories():
+    try:
+        return jsonify(categorias_list()), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
