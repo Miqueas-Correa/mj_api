@@ -1,5 +1,5 @@
 import pytest
-from app.service.productos_service import listar, obtener, crear, editar, eliminar
+from app.service.productos_service import categorias_list, featured, listar, obtener, crear, editar, eliminar
 from app.model.productos_model import db, Producto
 """
 Este módulo contiene pruebas unitarias para el servicio de productos de la aplicación.
@@ -51,12 +51,73 @@ def test_obtener_por_categoria(app_context, sample_product):
     assert res[0]["nombre"] == "TestProducto"
 
 def test_obtener_no_existe(app_context):
-    with pytest.raises(ValueError, match="Producto 999 no fue encontrado"):
-        obtener(1, 999, None)
+    with pytest.raises(ValueError, match="Producto 999 no fue encontrado"): obtener(1, 999, None)
 
 def test_obtener_by_invalido(app_context):
-    with pytest.raises(ValueError, match="Error en el parámetro 'by'"):
-        obtener(3, 1, None)
+    with pytest.raises(ValueError, match="Error en el parámetro 'by'"): obtener(3, 1, None)
+
+def test_categorias_list_success(app_context):
+    # Crear categorías distintas
+    p1 = Producto(
+        nombre="Prod1", precio=10, stock=5,
+        categoria="Ropa", descripcion="d1",
+        imagen_url="url", mostrar=True, destacado=False
+    )
+    p2 = Producto(
+        nombre="Prod2", precio=20, stock=3,
+        categoria="Electrónica", descripcion="d2",
+        imagen_url="url", mostrar=True, destacado=False
+    )
+    p3 = Producto(
+        nombre="Prod3", precio=30, stock=1,
+        categoria="Ropa", descripcion="d3",
+        imagen_url="url", mostrar=True, destacado=False
+    )
+    db.session.add_all([p1, p2, p3])
+    db.session.commit()
+    result = categorias_list()
+    assert set(result) == {"Ropa", "Electrónica"}
+
+def test_categorias_list_empty(app_context):
+    # BD vacía
+    result = categorias_list()
+    assert result == []
+
+def test_categorias_list_exception(app_context, monkeypatch):
+    # Forzar excepción
+    def fake_query_fail(*args, **kwargs): raise Exception("DB ERROR")
+    monkeypatch.setattr(db.session, "query", fake_query_fail)
+    with pytest.raises(ValueError) as exc: categorias_list()
+    assert "Error al listar categorías" in str(exc.value)
+
+def test_featured_success(app_context):
+    # Crear productos, algunos destacados
+    p1 = Producto(
+        nombre="Destacado1", precio=100, stock=4,
+        categoria="Cat1", descripcion="x",
+        imagen_url="url", mostrar=True, destacado=True
+    )
+    p2 = Producto(
+        nombre="NoDestacado", precio=200, stock=2,
+        categoria="Cat2", descripcion="y",
+        imagen_url="url", mostrar=True, destacado=False
+    )
+    p3 = Producto(
+        nombre="Destacado2", precio=300, stock=8,
+        categoria="Cat3", descripcion="z",
+        imagen_url="url", mostrar=True, destacado=True
+    )
+    db.session.add_all([p1, p2, p3])
+    db.session.commit()
+    result = featured()
+    assert len(result) == 2
+    nombres = [p["nombre"] for p in result]
+    assert "Destacado1" in nombres
+    assert "Destacado2" in nombres
+
+def test_featured_empty(app_context):
+    result = featured()
+    assert result == []
 
 # TEST crear()
 def test_crear_ok(app_context):

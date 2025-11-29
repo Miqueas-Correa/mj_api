@@ -56,7 +56,8 @@ def sample_product(app_context):
         categoria="Categoria1",
         descripcion="Descripción de prueba",
         imagen_url="http://imagen.com/test.jpg",
-        mostrar=True
+        mostrar=True,
+        destacado=False
     )
     db.session.add(producto)
     db.session.commit()
