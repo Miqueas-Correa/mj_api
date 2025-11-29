@@ -47,3 +47,4 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"  # Base de datos temporal
     DEBUG = False
+    CORS_ORIGINS = "*"

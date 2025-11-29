@@ -1,53 +1,40 @@
 import pytest
 from app.app import create_app
-from app.model.dto.UsuariosDTO import validar_telefono_ar
-from app.model.pedidos_model import Pedido, PedidoDetalle
+from app.model import db
+from app.model.usuarios_model import Usuario
 from app.model.productos_model import Producto
-from app.model.usuarios_model import db, Usuario
+from app.model.pedidos_model import Pedido, PedidoDetalle
+from app.model.dto.UsuariosDTO import validar_telefono_ar
 from werkzeug.security import generate_password_hash
-"""
-Este módulo define fixtures de pytest para pruebas unitarias en la aplicación Flask.
-Clases:
-    TestingConfig: Configuración de prueba para la base de datos y la aplicación.
-Fixtures:
-    app:
-        Crea una instancia de la aplicación Flask con configuración de prueba.
-        Inicializa y elimina la base de datos en memoria antes y después de cada test.
-    app_context:
-        Proporciona un contexto de aplicación para cada test, asegurando el correcto manejo de recursos.
-    sample_user:
-        Crea y retorna un usuario de ejemplo en la base de datos para pruebas relacionadas a usuarios.
-    sample_product:
-        Crea y retorna un producto de ejemplo en la base de datos para pruebas relacionadas a productos.
-    sample_pedido:
-        Crea y retorna un pedido de ejemplo, asociado a un usuario y un producto, para pruebas relacionadas a pedidos.
-"""
 
 class TestingConfig:
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TESTING = True
     DEBUG = False
+    # asegurar que exista la clave para CORS cuando create_app la lee
+    CORS_ORIGINS = ["*"]
+    CORS_SUPPORTS_CREDENTIALS = False
+
+@pytest.fixture(scope="session")
+def app():
+    # NOTA: le paso la CLASE; create_app es tolerante y manejará clase/instancia
+    app = create_app(TestingConfig)
+    return app
 
 @pytest.fixture
-def app():
-    app = create_app(TestingConfig)
+def app_context(app):
+    """
+    Proporciona contexto de app, crea tablas antes de cada test y las borra luego.
+    """
     with app.app_context():
         db.create_all()
-        yield app
+        yield
         db.session.remove()
         db.drop_all()
 
-
-@pytest.fixture(scope="function")
-def app_context(app):
-    # Crea y limpia el contexto de aplicación para cada test
-    with app.app_context():
-        yield
-
-# USUARIOS
 @pytest.fixture
-def sample_user(app):
+def sample_user(app_context):
     usuario = Usuario(
         nombre="mike",
         email="mike@test.com",
@@ -60,8 +47,7 @@ def sample_user(app):
     db.session.commit()
     return usuario
 
-# PRODUCTOS
-@pytest.fixture(scope="function")
+@pytest.fixture
 def sample_product(app_context):
     producto = Producto(
         nombre="TestProducto",
@@ -76,10 +62,9 @@ def sample_product(app_context):
     db.session.commit()
     return producto
 
-# PEDIDOS
 @pytest.fixture
 def sample_pedido(app_context, sample_user, sample_product):
-    pedido = Pedido(id_usuario=sample_user.id, total=100)
+    pedido = Pedido(id_usuario=sample_user.id, total=sample_product.precio)
     detalle = PedidoDetalle(producto_id=sample_product.id, cantidad=1)
     pedido.detalles.append(detalle)
     db.session.add(pedido)

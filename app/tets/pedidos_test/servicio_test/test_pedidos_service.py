@@ -15,10 +15,11 @@ Fixtures utilizados:
 - sample_pedido: Pedido de ejemplo para pruebas.
 - sample_user: Usuario de ejemplo para pruebas.
 - sample_product: Producto de ejemplo para pruebas.
-Las pruebas verifican tanto el comportamiento esperado como el manejo adecuado de errores mediante excepciones.
 """
 
+# ------------------------
 # Tests listar()
+# ------------------------
 def test_listar_todos(app_context, sample_pedido):
     res = listar(None)
     assert len(res) == 1
@@ -38,7 +39,9 @@ def test_listar_parametro_invalido(app_context):
     with pytest.raises(ValueError, match="Error en el parámetro 'cerrado'"):
         listar("otro")
 
+# ------------------------
 # Tests obtener()
+# ------------------------
 def test_obtener_por_id(app_context, sample_pedido):
     res = obtener(1, sample_pedido.id, None)
     assert res[0]["id"] == sample_pedido.id
@@ -59,7 +62,9 @@ def test_obtener_by_invalido(app_context):
     with pytest.raises(ValueError, match="Error en el parámetro 'by'"):
         obtener(3, 1, None)
 
+# ------------------------
 # Tests crear()
+# ------------------------
 def test_crear_ok(app_context, sample_user, sample_product):
     data = {
         "id_usuario": sample_user.id,
@@ -78,7 +83,9 @@ def test_crear_producto_invalido(app_context, sample_user):
     with pytest.raises(ValueError, match="Producto 999 no encontrado"):
         crear(data)
 
+# ------------------------
 # Tests editar()
+# ------------------------
 def test_editar_cerrado(app_context, sample_pedido):
     editar(sample_pedido.id, {"cerrado": True})
     pedido = db.session.get(Pedido, sample_pedido.id)
