@@ -113,6 +113,14 @@ def categorias_list():
     except Exception as e:
         raise ValueError("Error al listar categorías: " + str(e))
 
+# Lista todos los productos destacados
+def featured():
+    try:
+        productos = Producto.query.filter_by(destacado=True).all()
+        return [ProductoSalidaDTO.from_model(u).__dict__ for u in productos]
+    except Exception as e:
+        raise ValueError("Error al listar productos destacados: " + str(e))
+
 # PARA EL METODO POST
 def crear(request):
     try:

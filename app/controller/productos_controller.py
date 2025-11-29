@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
-from app.service.productos_service import editar, eliminar, listar, obtener, crear, categorias_list
+from app.service.productos_service import editar, eliminar, listar, obtener, crear, categorias_list, featured
 
 productos_bp = Blueprint("productos", __name__)
 
@@ -14,6 +14,7 @@ Rutas:
 - GET /productos/<int:id>: Busca un producto por su ID.
 - GET /productos/categoria/<string:categoria>: Busca productos por categoría.
 - GET /productos/categoria: Obtiene la lista de todas las categorías de productos.
+- GET /productos/destacado: Lista todos los productos destacados.
 - POST /productos: Crea un nuevo producto.
 - PUT /productos/<int:id>: Modifica un producto existente por su ID.
 - PUT /productos/<string:nombre>: Modifica un producto existente por su nombre.
@@ -79,6 +80,16 @@ def get_category(categoria):
 def get_all_categories():
     try:
         return jsonify(categorias_list()), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
+
+# Lista todos los productos destacados
+@productos_bp.route("/productos/destacado", methods=["GET"])
+def get_destacados():
+    try:
+        return jsonify(featured()), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
