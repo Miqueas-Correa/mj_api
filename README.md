@@ -109,6 +109,10 @@
 - **GET /productos/categoria
     Lista todas las categorias de cada producto.
 
+
+- **GET /productos/destacado
+    Lista todos los productos destacados.
+
 - **POST /productos**  
     Crea un producto.  
     _Body requerido:_
