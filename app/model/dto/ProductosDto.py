@@ -24,6 +24,7 @@ class ProductoEntradaDTO(BaseModel):
     descripcion: Annotated[str, Field(min_length=1, max_length=200)]
     imagen_url: Annotated[str, Field(min_length=1, max_length=150)]
     mostrar: bool = True
+    destacado: bool = False
 
 @dataclass
 class ProductoSalidaDTO:
@@ -35,6 +36,7 @@ class ProductoSalidaDTO:
     descripcion: str
     imagen_url: str
     mostrar: bool
+    destacado: bool
 
     @classmethod
     def from_model(cls, producto):
@@ -46,7 +48,8 @@ class ProductoSalidaDTO:
             categoria=producto.categoria,
             descripcion=producto.descripcion,
             imagen_url=producto.imagen_url,
-            mostrar=producto.mostrar
+            mostrar=producto.mostrar,
+            destacado=producto.destacado
         )
 
 # DTO para modificar
@@ -58,3 +61,4 @@ class ProductoUpdateDTO(BaseModel):
     descripcion: Optional[str] = Field(None, min_length=1, max_length=200)
     imagen_url: Optional[str] = Field(None, min_length=1, max_length=200)
     mostrar: Optional[bool] = None
+    destacado: Optional[bool] = None

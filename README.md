@@ -106,6 +106,9 @@
 - **GET /productos/categoria/<nombre>?mostrar=true|false**  
     Lista productos por categoría.
 
+- **GET /productos/categoria
+    Lista todas las categorias de cada producto.
+
 - **POST /productos**  
     Crea un producto.  
     _Body requerido:_
@@ -115,6 +118,7 @@
         "descripcion": "Descripción",
         "imagen_url": "https://...",
         "mostrar": true,
+        "destacado": false,
         "nombre": "Nombre",
         "precio": 19999.99,
         "stock": 10

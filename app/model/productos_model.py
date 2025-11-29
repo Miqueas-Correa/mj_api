@@ -11,6 +11,7 @@ Atributos:
     descripcion (str): Descripción detallada del producto, no puede ser nulo.
     imagen_url (str): URL de la imagen del producto, no puede ser nulo.
     mostrar (bool): Indica si el producto debe mostrarse (por defecto True).
+    destacado (bool): Indica si el producto es destacado (por defecto False), no puede ser nulo.
     detalles (list): Relación con los detalles de pedidos asociados a este producto.
 Métodos:
     __repr__(): Representación legible del objeto Producto.
@@ -28,6 +29,7 @@ class Producto(db.Model):
     descripcion = db.Column(db.Text, nullable=False)
     imagen_url = db.Column(db.String(200), nullable=False)
     mostrar = db.Column(db.Boolean, default=True)
+    destacado = db.Column(db.Boolean, default=False, nullable=False)
 
     detalles = db.relationship("PedidoDetalle", back_populates="productos", cascade="all, delete-orphan")
 
