@@ -114,10 +114,20 @@ def categorias_list():
         raise ValueError("Error al listar categorías: " + str(e))
 
 # Lista todos los productos destacados
-def featured():
+def featured(L_mostrar):
     try:
-        productos = Producto.query.filter_by(destacado=True).all()
-        return [ProductoSalidaDTO.from_model(u).__dict__ for u in productos]
+        query = Producto.query.filter_by(destacado=True)
+        if L_mostrar is not None:
+            if L_mostrar.lower() == 'true':
+                query = query.filter_by(mostrar=True)
+            elif L_mostrar.lower() == 'false':
+                query = query.filter_by(mostrar=False)
+            else:
+                raise ValueError("Error en el parámetro 'mostrar', debe ser 'true' o 'false'")
+        productos = query.all()
+        return [ProductoSalidaDTO.from_model(p).__dict__ for p in productos]
+    except ValueError as e:
+        raise ValueError(str(e))
     except Exception as e:
         raise ValueError("Error al listar productos destacados: " + str(e))
 

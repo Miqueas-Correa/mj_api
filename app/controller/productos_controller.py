@@ -89,7 +89,8 @@ def get_all_categories():
 @productos_bp.route("/productos/destacado", methods=["GET"])
 def get_destacados():
     try:
-        return jsonify(featured()), 200
+        L_mostrar = request.args.get("mostrar", default=None, type=str)
+        return jsonify(featured(L_mostrar)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:

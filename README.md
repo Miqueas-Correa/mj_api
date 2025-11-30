@@ -106,11 +106,11 @@
 - **GET /productos/categoria/<nombre>?mostrar=true|false**  
     Lista productos por categoría.
 
-- **GET /productos/categoria
+- **GET /productos/categoria**
     Lista todas las categorias de cada producto.
 
 
-- **GET /productos/destacado
+- **GET /productos/destacado?mostrar=true|false**
     Lista todos los productos destacados.
 
 - **POST /productos**  

@@ -90,34 +90,39 @@ def test_categorias_list_exception(app_context, monkeypatch):
     with pytest.raises(ValueError) as exc: categorias_list()
     assert "Error al listar categorías" in str(exc.value)
 
-def test_featured_success(app_context):
-    # Crear productos, algunos destacados
-    p1 = Producto(
-        nombre="Destacado1", precio=100, stock=4,
-        categoria="Cat1", descripcion="x",
-        imagen_url="url", mostrar=True, destacado=True
-    )
-    p2 = Producto(
-        nombre="NoDestacado", precio=200, stock=2,
-        categoria="Cat2", descripcion="y",
-        imagen_url="url", mostrar=True, destacado=False
-    )
-    p3 = Producto(
-        nombre="Destacado2", precio=300, stock=8,
-        categoria="Cat3", descripcion="z",
-        imagen_url="url", mostrar=True, destacado=True
-    )
-    db.session.add_all([p1, p2, p3])
-    db.session.commit()
-    result = featured()
+def test_featured_no_filter(app_context):
+    p1 = Producto(nombre="A", precio=1, stock=1, categoria="X", descripcion="d1", imagen_url="img", mostrar=True, destacado=True)
+    p2 = Producto(nombre="B", precio=1, stock=1, categoria="X", descripcion="d2", imagen_url="img", mostrar=False, destacado=True)
+    db = Producto.query.session
+    db.add_all([p1, p2])
+    db.commit()
+    result = featured(None)
     assert len(result) == 2
-    nombres = [p["nombre"] for p in result]
-    assert "Destacado1" in nombres
-    assert "Destacado2" in nombres
+    assert {r["nombre"] for r in result} == {"A", "B"}
 
-def test_featured_empty(app_context):
-    result = featured()
-    assert result == []
+def test_featured_mostrar_true(app_context):
+    p1 = Producto(nombre="A", precio=1, stock=1, categoria="X", descripcion="d1", imagen_url="img", mostrar=True, destacado=True)
+    p2 = Producto(nombre="B", precio=1, stock=1, categoria="X", descripcion="d2", imagen_url="img", mostrar=False, destacado=True)
+    db = Producto.query.session
+    db.add_all([p1, p2])
+    db.commit()
+    result = featured("true")
+    assert len(result) == 1
+    assert result[0]["nombre"] == "A"
+
+def test_featured_mostrar_false(app_context):
+    p1 = Producto(nombre="A", precio=1, stock=1, categoria="X", descripcion="d1", imagen_url="img", mostrar=True, destacado=True)
+    p2 = Producto(nombre="B", precio=1, stock=1, categoria="X", descripcion="d2", imagen_url="img", mostrar=False, destacado=True)
+    db = Producto.query.session
+    db.add_all([p1, p2])
+    db.commit()
+    result = featured("false")
+    assert len(result) == 1
+    assert result[0]["nombre"] == "B"
+
+def test_featured_invalid_param(app_context):
+    with pytest.raises(ValueError) as exc: featured("asdsad")
+    assert "Error en el parámetro 'mostrar'" in str(exc.value)
 
 # TEST crear()
 def test_crear_ok(app_context):
