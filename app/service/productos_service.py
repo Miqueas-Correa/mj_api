@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 from app.model.dto.ProductosDTO import ProductoSalidaDTO, ProductoEntradaDTO, ProductoUpdateDTO
-from app.model.productos_model import Producto, db
+from app.model.productos_model import Producto
+from app.extensions import db
 
 """
 Módulo de servicios para la gestión de productos.

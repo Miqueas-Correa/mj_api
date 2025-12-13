@@ -2,7 +2,7 @@ from pydantic import ValidationError
 from app.model.dto.PedidosDTO import PedidoUpdateDTO
 from app.model.pedidos_model import Pedido, PedidoDetalle
 from app.model.productos_model import Producto
-from app.model import db
+from app.extensions import db
 from app.service.usuarios_service import obtener_U
 
 """

@@ -1,4 +1,4 @@
-from app.model import db
+from app.extensions import db
 
 """
 Modelo Producto para la tabla 'productos'.

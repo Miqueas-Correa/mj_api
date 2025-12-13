@@ -1,7 +1,8 @@
+from flask_jwt_extended import create_access_token, create_refresh_token
 from pydantic import ValidationError
 from app.model.dto.UsuariosDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, UsuarioUpdateDTO
-from app.model.usuarios_model import Usuario, db
-from werkzeug.security import generate_password_hash, check_password_hash
+from app.model.usuarios_model import Usuario
+from app.extensions import db
 
 """
 Módulo de servicios para la gestión de usuarios.
@@ -99,6 +100,8 @@ def obtener_U(by_id, valor):
 # PARA EL METODO POST
 def crear(request):
     try:
+        if not request.get("acepta_uso_datos", False):
+            raise ValueError("Debes aceptar el uso de datos para continuar")
         dto = UsuarioEntradaDTO(**request)
         # email único
         if Usuario.query.filter_by(email=dto.email).first():
@@ -114,9 +117,9 @@ def crear(request):
         nuevo_usuario = Usuario(
             nombre=dto.nombre,
             email=dto.email,
-            telefono=dto.telefono,
-            contrasenia=generate_password_hash(dto.contrasenia)
+            telefono=dto.telefono
         )
+        nuevo_usuario.set_password(dto.contrasenia)
 
         db.session.add(nuevo_usuario) # prepara la insercion
         db.session.commit() # ejecuta la insercion en la base de datos
@@ -164,7 +167,7 @@ def editar(id, request, by_id):
             modificado = True
 
         if dto.contrasenia is not None:
-            usuario.contrasenia = generate_password_hash(dto.contrasenia)
+            usuario.set_password(dto.contrasenia)
             modificado = True
 
         if dto.rol is not None:
@@ -182,19 +185,40 @@ def editar(id, request, by_id):
     except Exception as e:
         raise ValueError("Error al modificar el usuario: " + str(e))
 
-# PARA EL METODO POST DE COMPROBAR CONTRASEÑA
-def check_password(nombre_id, contrasenia, by_id):
+def check_password(email, contrasenia):
     try:
-        usuario = db.session.get(Usuario, nombre_id) if by_id else Usuario.query.filter_by(nombre=nombre_id).first()
-        if not usuario or usuario.activo == False:
-            raise ValueError("Usuario no encontrado")
-        if not check_password_hash(usuario.contrasenia, contrasenia):
+        usuario = Usuario.query.filter_by(email=email).first()
+
+        if not usuario or not usuario.activo:
+            raise ValueError("Usuario no encontrado o inactivo")
+
+        if not usuario.check_password(contrasenia):
             raise ValueError("Contraseña incorrecta")
-        return True
+
+        access_token = create_access_token(
+            identity=usuario.id,
+            additional_claims={"rol": usuario.rol}
+        )
+        refresh_token = create_refresh_token(identity=usuario.id)
+
+        return {
+            "token": access_token,
+            "refresh": refresh_token,
+            "usuario": {
+                "id": usuario.id,
+                "nombre": usuario.nombre,
+                "email": usuario.email,
+                "telefono": usuario.telefono,
+                "rol": usuario.rol
+            }
+        }
+
+    except ValidationError as e:
+        raise ValueError(f"Error de validación: {e.errors()}")
     except ValueError as e:
         raise ValueError(str(e))
     except Exception as e:
-        raise ValueError("Error al chekear la contraseña: " + str(e))
+        raise ValueError(f"Error al comprobar la contraseña: {str(e)}")
 
 # PARA EL METODO DELETE
 def eliminar(valor, by_id):

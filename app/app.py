@@ -1,18 +1,40 @@
 from flask import Flask
+from app.config import Config
 from flask_cors import CORS
-from app.model import db
+from app.extensions import db, jwt
 from app.controller.pedidos_controller import pedidos_bp
 from app.controller.usuarios_controller import usuarios_bp
 from app.controller.productos_controller import productos_bp
+from app.controller.auth_controller import auth_bp
+
+"""
+Este módulo define la creación y configuración de la aplicación Flask principal para el proyecto.
+Funciones:
+----------
+- _load_config(app, config_like):
+    Carga la configuración en la instancia de Flask `app` de manera tolerante, aceptando como entrada:
+      - Un diccionario de configuración.
+      - Una clase de configuración.
+      - Una instancia de configuración.
+      - Un objeto con atributos de configuración.
+    Intenta varias estrategias para aplicar la configuración y evita errores si el formato no es el esperado.
+- create_app(config_class=None):
+    Crea y configura la aplicación Flask.
+    Parámetros:
+        config_class: Puede ser una clase de configuración, una instancia, un diccionario o None.
+    Realiza:
+        - Carga de configuración flexible.
+        - Configuración de CORS con orígenes definidos en la configuración.
+        - Inicialización de JWT y base de datos.
+        - Registro de blueprints para usuarios, pedidos, productos y autenticación, si están disponibles.
+    Devuelve:
+        Instancia de Flask configurada.
+Ejecución directa:
+------------------
+Si el módulo se ejecuta directamente, crea la app usando la configuración principal y la ejecuta en modo debug si está configurado.
+"""
 
 def _load_config(app, config_like):
-    """
-    Carga configuración en app.config desde:
-    - una clase (Config)
-    - una instancia de clase
-    - un dict
-    - si es None, intenta cargar app.config default (no hace nada)
-    """
     if config_like is None:
         return
 
@@ -63,6 +85,9 @@ def create_app(config_class=None):
         resources={r"/*": {"origins": origins}}
     )
 
+    # Inicializar JWT
+    jwt.init_app(app)
+
     # Inicializar DB
     db.init_app(app)
 
@@ -79,11 +104,14 @@ def create_app(config_class=None):
         app.register_blueprint(productos_bp)
     except Exception:
         pass
+    try:
+        app.register_blueprint(auth_bp)
+    except Exception:
+        pass
 
     return app
 
 if __name__ == "__main__":
     # cuando se ejecuta directamente, cargar Config real si existe
-    from app.config import Config
     app = create_app(Config)
     app.run(debug=app.config.get("DEBUG", False))

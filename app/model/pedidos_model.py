@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from app.model import db
+from app.extensions import db
 
 """
 Definición de los modelos de base de datos para la gestión de pedidos y sus detalles.

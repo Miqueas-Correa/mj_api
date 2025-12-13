@@ -1,4 +1,5 @@
-from app.model import db
+from app.extensions import db
+from werkzeug.security import generate_password_hash, check_password_hash
 
 """
 Modelo de datos para la entidad Usuario.
@@ -31,3 +32,9 @@ class Usuario(db.Model):
 
     def __repr__(self):
         return f"<Usuario {self.id} - {self.nombre} ({self.rol})>"
+
+    def check_password(self, contrasenia):
+        return check_password_hash(self.contrasenia, contrasenia)
+
+    def set_password(self, contrasenia):
+        self.contrasenia = generate_password_hash(contrasenia)

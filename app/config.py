@@ -1,4 +1,5 @@
 # configuracion (desarrollo, produccion, testing)
+from datetime import timedelta
 import os
 from dotenv import load_dotenv
 # Cargar las variables de .env
@@ -12,6 +13,7 @@ Clases:
         Configuración base para la aplicación.
         - Configura la conexión a la base de datos MySQL utilizando variables de entorno.
         - Configura los orígenes permitidos para CORS.
+        - Configura las opciones de JWT.
         - Define parámetros generales de Flask como el entorno y el modo debug.
     TestingConfig(Config):
         Configuración específica para pruebas.
@@ -30,8 +32,12 @@ class Config:
     # CORS Config
     # Lista separada por coma → se convierte a python list
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
-
     CORS_SUPPORTS_CREDENTIALS = True
+
+    # JWT Config
+    SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    ACCESS_TOKEN_EXPIRES = timedelta(hours=7)
+    REFRESH_TOKEN_EXPIRES = timedelta(days=7)
 
     # URI de SQLAlchemy
     SQLALCHEMY_DATABASE_URI = (
