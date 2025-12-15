@@ -6,34 +6,33 @@ from app.controller.pedidos_controller import pedidos_bp
 from app.controller.usuarios_controller import usuarios_bp
 from app.controller.productos_controller import productos_bp
 from app.controller.auth_controller import auth_bp
+from app.security.jwt_callbacks import register_jwt_callbacks
 
 """
-Este módulo define la creación y configuración de la aplicación Flask principal para el proyecto.
+Este módulo define la aplicación principal de Flask para el proyecto.
 Funciones:
 ----------
 - _load_config(app, config_like):
-    Carga la configuración en la instancia de Flask `app` de manera tolerante, aceptando como entrada:
-      - Un diccionario de configuración.
-      - Una clase de configuración.
-      - Una instancia de configuración.
-      - Un objeto con atributos de configuración.
-    Intenta varias estrategias para aplicar la configuración y evita errores si el formato no es el esperado.
+    Carga la configuración en la instancia de Flask `app` desde diferentes fuentes posibles:
+    - Un diccionario de configuración.
+    - Una clase o instancia de configuración.
+    - Un objeto con atributos de configuración.
+    Permite flexibilidad y tolerancia a errores en la carga de configuración.
 - create_app(config_class=None):
-    Crea y configura la aplicación Flask.
+    Crea y configura una instancia de la aplicación Flask.
     Parámetros:
-        config_class: Puede ser una clase de configuración, una instancia, un diccionario o None.
-    Realiza:
-        - Carga de configuración flexible.
-        - Configuración de CORS con orígenes definidos en la configuración.
-        - Inicialización de JWT y base de datos.
-        - Registro de blueprints para usuarios, pedidos, productos y autenticación, si están disponibles.
+        config_class: Puede ser una clase, instancia, diccionario de configuración o None.
+    Inicializa:
+        - Configuración de la app.
+        - CORS con orígenes definidos en la configuración.
+        - Extensiones JWT y base de datos.
+        - Blueprints para usuarios, pedidos, productos y autenticación (si existen).
     Devuelve:
         Instancia de Flask configurada.
-Ejecución directa:
-------------------
-Si el módulo se ejecuta directamente, crea la app usando la configuración principal y la ejecuta en modo debug si está configurado.
+Uso:
+----
+Si el archivo se ejecuta directamente, crea la app usando la clase Config y la ejecuta en modo debug si está configurado.
 """
-
 def _load_config(app, config_like):
     if config_like is None:
         return
@@ -87,6 +86,8 @@ def create_app(config_class=None):
 
     # Inicializar JWT
     jwt.init_app(app)
+
+    register_jwt_callbacks(jwt)
 
     # Inicializar DB
     db.init_app(app)

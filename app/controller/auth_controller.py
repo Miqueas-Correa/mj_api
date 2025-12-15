@@ -1,11 +1,30 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
+    create_refresh_token,
+    get_jwt,
     jwt_required,
     get_jwt_identity
 )
 from pydantic import ValidationError
-from app.service.usuarios_service import check_password, crear
+from app.service.usuarios_service import check_password, crear, logout_token
+
+"""
+Controlador de autenticación para la API.
+Rutas:
+    /auth/login (POST): Inicia sesión de usuario. Requiere email y contraseña en formato JSON.
+    /auth/register (POST): Registra un nuevo usuario. Requiere datos de usuario en formato JSON.
+    /auth/logout (POST): Cierra la sesión del usuario autenticado. Requiere JWT válido.
+    /auth/refresh (POST): Refresca el token de acceso usando un refresh token válido.
+Excepciones manejadas:
+    - ValidationError: Error de validación de datos de entrada.
+    - ValueError: Error de valor, como credenciales incorrectas.
+    - Exception: Otros errores internos del servidor.
+Dependencias:
+    - Flask y Flask-JWT-Extended para manejo de rutas y autenticación JWT.
+    - Pydantic para validación de datos.
+    - Servicios personalizados para manejo de usuarios y tokens.
+"""
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -53,11 +72,27 @@ def register():
 @auth_bp.route("/logout", methods=["POST"])
 @jwt_required()
 def logout():
+    jti = get_jwt()["jti"]
+    logout_token(jti)
     return jsonify({"message": "Logout OK"}), 200
 
 @auth_bp.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
 def refresh():
+    old_jti = get_jwt()["jti"]
+    logout_token(old_jti)
+
     user_id = get_jwt_identity()
-    new_token = create_access_token(identity=user_id)
-    return jsonify({"token": new_token}), 200
+    claims = get_jwt()
+
+    access = create_access_token(
+        identity=user_id,
+        additional_claims={"rol": claims["rol"]}
+    )
+
+    refresh = create_refresh_token(identity=user_id)
+
+    return jsonify({
+        "token": access,
+        "refresh": refresh
+    }), 200

@@ -1,32 +1,32 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 from pydantic import ValidationError
+from app.model.token_blacklist import TokenBlacklist
 from app.model.dto.UsuariosDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, UsuarioUpdateDTO
 from app.model.usuarios_model import Usuario
 from app.extensions import db
 
 """
-Módulo de servicios para la gestión de usuarios.
+Módulo de servicios para la gestión de usuarios en la aplicación.
 Funciones:
 ----------
 listar(L_activos):
-    Lista los usuarios del sistema, filtrando por activos o inactivos si se especifica.
+    Lista los usuarios según su estado de actividad (activos/inactivos/todos).
     Parámetros:
-        L_activos (str | None): 'true' para activos, 'false' para inactivos, None para todos.
+        L_activos (str o None): 'true', 'false' o None para filtrar usuarios activos, inactivos o todos.
     Retorna:
         Lista de diccionarios con los datos de los usuarios.
     Excepciones:
         ValueError: Si el parámetro es inválido o no se encuentran usuarios.
-obtener_U(by_id, valor):
-    Obtiene un usuario por ID o por nombre.
+obtener(id):
+    Obtiene un usuario por su ID.
     Parámetros:
-        by_id (bool): True para buscar por ID, False para buscar por nombre.
-        valor (int | str): ID o nombre del usuario.
+        id (int): ID del usuario.
     Retorna:
         Diccionario con los datos del usuario.
     Excepciones:
-        ValueError: Si no se encuentra el usuario.
+        ValueError: Si el usuario no existe.
 crear(request):
-    Crea un nuevo usuario en el sistema.
+    Crea un nuevo usuario a partir de los datos proporcionados.
     Parámetros:
         request (dict): Datos del usuario a crear.
     Excepciones:
@@ -34,30 +34,33 @@ crear(request):
 editar(id, request, by_id):
     Edita los datos de un usuario existente.
     Parámetros:
-        id (int | str): ID o nombre del usuario a editar.
+        id (int o str): ID o nombre del usuario.
         request (dict): Datos a actualizar.
-        by_id (bool): True para buscar por ID, False para buscar por nombre.
+        by_id (bool): True si se busca por ID, False si por nombre.
     Excepciones:
-        ValueError: Si hay errores de validación, datos duplicados o no se encuentra el usuario.
-check_password(nombre_id, contrasenia, by_id):
-    Verifica la contraseña de un usuario.
+        ValueError: Si hay errores de validación, datos duplicados o usuario no encontrado.
+check_password(email, contrasenia):
+    Verifica las credenciales de un usuario y genera tokens JWT si son correctas.
     Parámetros:
-        nombre_id (int | str): ID o nombre del usuario.
-        contrasenia (str): Contraseña a verificar.
-        by_id (bool): True para buscar por ID, False para buscar por nombre.
+        email (str): Email del usuario.
+        contrasenia (str): Contraseña del usuario.
     Retorna:
-        True si la contraseña es correcta.
+        Diccionario con tokens y datos del usuario.
     Excepciones:
-        ValueError: Si el usuario no existe, está inactivo o la contraseña es incorrecta.
+        ValueError: Si las credenciales son incorrectas o el usuario está inactivo.
 eliminar(valor, by_id):
     Marca un usuario como inactivo (eliminación lógica).
     Parámetros:
-        valor (int | str): ID o nombre del usuario.
-        by_id (bool): True para buscar por ID, False para buscar por nombre.
+        valor (int o str): ID o nombre del usuario.
+        by_id (bool): True si se busca por ID, False si por nombre.
     Retorna:
-        dict: Mensaje de éxito.
+        Diccionario con mensaje de éxito.
     Excepciones:
-        ValueError: Si el usuario no existe o está inactivo.
+        ValueError: Si el usuario no existe o ya está inactivo.
+logout_token(jti):
+    Revoca un token JWT añadiéndolo a la lista negra.
+    Parámetros:
+        jti (str): Identificador único del token JWT.
 """
 
 # PARA EL METODO GET
@@ -83,14 +86,10 @@ def listar(L_activos):
         raise ValueError("Error al listar usuarios: " + str(e))
 
 # buscar usuario por id o por nombre
-def obtener_U(by_id, valor):
+def obtener(id):
     try:
-        if by_id:
-            usuario = db.session.get(Usuario, valor)
-            if not usuario: raise ValueError("Usuario no encontrado")
-        else:
-            usuario = Usuario.query.filter_by(nombre=valor).first()
-            if not usuario: raise ValueError("Usuario no encontrado")
+        usuario = db.session.get(Usuario, id)
+        if not usuario: raise ValueError("Usuario no encontrado")
         return UsuarioSalidaDTO.from_model(usuario).__dict__
     except ValueError as e:
         raise ValueError(str(e))
@@ -233,3 +232,10 @@ def eliminar(valor, by_id):
         raise ValueError(str(e))
     except Exception as e:
         raise ValueError("Error al eliminar usuario: " + str(e))
+
+def logout_token(jti: str):
+    if TokenBlacklist.query.filter_by(jti=jti).first():
+        return  # ya revocado
+
+    db.session.add(TokenBlacklist(jti=jti))
+    db.session.commit()

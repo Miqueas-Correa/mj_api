@@ -1,6 +1,6 @@
 import pytest
 from app.model.usuarios_model import db, Usuario
-from app.service.usuarios_service import listar, obtener_U, crear, editar, check_password, eliminar
+from app.service.usuarios_service import listar, obtener, crear, editar, check_password, eliminar
 """
 Pruebas unitarias para el servicio de usuarios.
 Este módulo contiene pruebas para las funciones del servicio de usuarios, incluyendo:
@@ -44,16 +44,16 @@ def test_listar_sin_resultados(app_context):
 
 # TEST obtener_U()
 def test_obtener_por_id(app_context, sample_user):
-    res = obtener_U(True, sample_user.id)
+    res = obtener(True, sample_user.id)
     assert res["nombre"] == "mike"
 
 def test_obtener_por_nombre(app_context, sample_user):
-    res = obtener_U(False, "mike")
+    res = obtener(False, "mike")
     assert res["email"] == "mike@test.com"
 
 def test_obtener_no_existe(app_context):
     with pytest.raises(ValueError, match="Usuario no encontrado"):
-        obtener_U(True, 999)
+        obtener(True, 999)
 
 # TEST crear()
 def test_crear_ok(app_context):
