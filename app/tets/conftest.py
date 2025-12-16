@@ -1,6 +1,6 @@
 import pytest
 from app.app import create_app
-from app.model import db
+from app.extensions import db
 from app.model.usuarios_model import Usuario
 from app.model.productos_model import Producto
 from app.model.pedidos_model import Pedido, PedidoDetalle
@@ -8,13 +8,14 @@ from app.model.dto.UsuariosDTO import validar_telefono_ar
 from werkzeug.security import generate_password_hash
 
 class TestingConfig:
+    TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    TESTING = True
     DEBUG = False
-    # asegurar que exista la clave para CORS cuando create_app la lee
     CORS_ORIGINS = ["*"]
     CORS_SUPPORTS_CREDENTIALS = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    JWT_SECRET_KEY = "test-jwt-secret"
 
 @pytest.fixture(scope="session")
 def app():
@@ -71,3 +72,15 @@ def sample_pedido(app_context, sample_user, sample_product):
     db.session.add(pedido)
     db.session.commit()
     return pedido
+
+@pytest.fixture
+def client(app, app_context):
+    return app.test_client()
+
+@pytest.fixture
+def disable_jwt_blacklist(app, monkeypatch):
+    monkeypatch.setattr(
+        app.extensions["jwt"],
+        "_token_in_blocklist_callback",
+        lambda *_: False
+    )

@@ -84,13 +84,13 @@ def create_app(config_class=None):
         resources={r"/*": {"origins": origins}}
     )
 
+    # Inicializar DB
+    db.init_app(app)
+
     # Inicializar JWT
     jwt.init_app(app)
 
     register_jwt_callbacks(jwt)
-
-    # Inicializar DB
-    db.init_app(app)
 
     # Registrar blueprints sólo si existen (evita errores en tests parciales)
     try:

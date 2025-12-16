@@ -38,9 +38,9 @@ class Config:
     CORS_SUPPORTS_CREDENTIALS = True
 
     # JWT Config
-    SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-    ACCESS_TOKEN_EXPIRES = timedelta(hours=7)
-    REFRESH_TOKEN_EXPIRES = timedelta(days=7)
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=7)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
     TOKEN_LOCATION = ["headers"]
     BLACKLIST_ENABLED = True
 
