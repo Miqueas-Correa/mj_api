@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
-from app.controller.auth_middleware import require_admin, require_user
-from app.service.pedidos_service import crear, editar, eliminar, listar, obtener, crear
+from app.service.pedidos_service import crear, editar, obtener, crear
 
 pedidos_bp = Blueprint("pedidos", __name__)
 
@@ -44,74 +44,29 @@ Decoradores:
     - @require_admin: Requiere autenticación de administrador.
 """
 
-def es_admin():
-    return request.user_rol == "admin"
-
 # Listar pedidos, token requerido
-@require_user
-@pedidos_bp.route("/pedidos", methods=["GET"])
+@pedidos_bp.route("/pedidos/me", methods=["GET"])
+@jwt_required()
 def get():
     # listo los pedidos
     try:
         L_cerrado = request.args.get("cerrado", default=None, type=str)
 
-        if es_admin():
-            # admin ve todos
-            return jsonify(listar(L_cerrado)), 200
-        else:
-            # usuario solo sus pedidos
-            return jsonify(obtener(0, request.user_id, L_cerrado)), 200
+        return jsonify(obtener(0, get_jwt_identity(), L_cerrado)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# buscar pedido por id usuario
-@require_admin
-@pedidos_bp.route("/pedidos/usuario/<int:id>", methods=["GET"])
-def get_id_usuario(id):
-    try:
-        L_cerrado = request.args.get("cerrado", default=None, type=str)
-        return jsonify(obtener(0, id, L_cerrado)), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# buscar pedido por id
-@require_user
-@pedidos_bp.route("/pedidos/<int:id>", methods=["GET"])
-def get_id(id):
-    try:
-        L_cerrado = request.args.get("cerrado", default=None, type=str)
-        return jsonify(obtener(1, id, L_cerrado)), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# buscar pedido por codigo producto
-@require_admin
-@pedidos_bp.route("/pedidos/producto/<int:codigo>", methods=["GET"])
-def get_codigo_producto(codigo):
-    try:
-        L_cerrado = request.args.get("cerrado", default=None, type=str)
-        return jsonify(obtener(2, codigo, L_cerrado)), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
 # Crear producto
-@require_user
 @pedidos_bp.route("/pedidos", methods=["POST"])
+@jwt_required()
 def post():
     try:
         if not request.is_json: return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
 
         data = request.json
-
-        if not es_admin(): data["id_usuario"] = request.user_id
+        data["id_usuario"] = get_jwt_identity()
 
         crear(data)
         return jsonify({"message": "Pedido creado exitosamente"}), 201
@@ -123,8 +78,8 @@ def post():
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Modificar pedido
-@require_admin
 @pedidos_bp.route('/pedidos/<int:id>', methods=["PUT"])
+@jwt_required()
 def put(id):
     try:
         if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
@@ -132,18 +87,6 @@ def put(id):
         return jsonify({"message":"Pedido modificado exitosamente"}),200
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# Eliminar producto por id
-@require_admin
-@pedidos_bp.route('/pedidos/<int:id>', methods=["DELETE"])
-def delete(id):
-    try:
-        eliminar(id)
-        return jsonify({"message":"Pedido eliminado con exito"}),200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:

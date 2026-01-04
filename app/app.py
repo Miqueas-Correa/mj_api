@@ -6,6 +6,8 @@ from app.controller.pedidos_controller import pedidos_bp
 from app.controller.usuarios_controller import usuarios_bp
 from app.controller.productos_controller import productos_bp
 from app.controller.auth_controller import auth_bp
+from app.controller.admin_controller import admin_bp
+from app.controller.static_controller import static_bp
 from app.security.jwt_callbacks import register_jwt_callbacks
 
 """
@@ -81,8 +83,14 @@ def create_app(config_class=None):
     CORS(
         app,
         supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", True),
-        resources={r"/*": {"origins": origins}}
+        resources={
+            r"/*": {"origins": origins},
+            r"uploads/*": {"origins": origins}
+        },
+        allow_headers=["Content-Type", "Authorization"]
     )
+
+    app.config['MAX_CONTENT_LENGTH'] = app.config.get('MAX_CONTENT_LENGTH', 5 * 1024 * 1024)
 
     # Inicializar DB
     db.init_app(app)
@@ -107,6 +115,14 @@ def create_app(config_class=None):
         pass
     try:
         app.register_blueprint(auth_bp)
+    except Exception:
+        pass
+    try:
+        app.register_blueprint(admin_bp)
+    except Exception:
+        pass
+    try:
+        app.register_blueprint(static_bp)
     except Exception:
         pass
 

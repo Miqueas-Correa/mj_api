@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
-from app.controller.auth_middleware import require_user, require_admin
-from app.service.usuarios_service import eliminar, listar, obtener, editar
+from app.service.pedidos_service import editar
+from app.service.usuarios_service import obtener
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
@@ -24,74 +25,28 @@ Dependencias:
 - usuarios_service: Lógica de negocio para operaciones sobre usuarios.
 """
 
-# Listar todos los usuarios
-@usuarios_bp.route("/usuarios", methods=["GET"])
-@require_admin
-def get():
-    try:
-        L_activos = request.args.get("activos", default=None, type=str)
-        return jsonify(listar(L_activos)), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
 @usuarios_bp.route("/usuarios/me", methods=["GET"])
-@require_user
+@jwt_required()
 def get_me():
-    if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
     try:
-        if 'id_usuario' not in request.json: return ValueError({"error":"Falta el campo 'id_usuario' en la solicitud"}),400
-        return jsonify(obtener(request.id_usuario)), 200
+        return jsonify(obtener(int(get_jwt_identity()))), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-@usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
-@require_admin
-def get_by_id(id):
-    try:
-        return jsonify(obtener(id)), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Modificar usuario, este metodo permite cambiar los datos de un usuario existente. antes
-# de utilizarlo se supone que se comprobo la contraseña
-@usuarios_bp.route('/usuarios/<int:id>', methods=["PUT"])
-def put(id):
-    if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-    try:
-        editar(id, request.json, admin=True)
-        return jsonify({"message":"Usuario modificado exitosamente"}),200
-    except ValidationError as e:
-        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 @usuarios_bp.route("/usuarios/me", methods=["PUT"])
-@require_user
+@jwt_required()
 def update_me():
     try:
-        editar(request.user_id, request.json, admin=False)
+        user_id = get_jwt_identity()
+        editar(user_id, request.json, es_admin=False)
         return jsonify({"message": "Perfil actualizado"}), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# Eliminar usuario (cambiar su estado a inactivo)
-@usuarios_bp.route('/usuarios/<int:id>', methods=["DELETE"])
-def dalete(id):
-    try:
-        return jsonify(eliminar(id, by_id=True)),200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500

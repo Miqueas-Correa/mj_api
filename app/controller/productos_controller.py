@@ -1,7 +1,5 @@
-from flask import Blueprint, request, jsonify
-from pydantic import ValidationError
-from app.controller.auth_middleware import require_admin
-from app.service.productos_service import editar, eliminar, listar, obtener, crear, categorias_list, featured
+from flask import Blueprint, jsonify
+from app.service.productos_service import listar, obtener, categorias_list, featured
 
 productos_bp = Blueprint("productos", __name__)
 
@@ -35,17 +33,23 @@ Dependencias:
 - Servicios de productos y middleware de autenticación propios de la aplicación.
 """
 
-def es_admin():
-    return hasattr(request, "user_rol") and request.user_rol == "admin"
-
 # Listar Productos
 @productos_bp.route("/productos", methods=["GET"])
 def get():
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str) if es_admin() else "true"
-        return jsonify(listar(L_mostrar)), 200
+        return jsonify(listar()), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
+
+# buscar producto por categoria
+@productos_bp.route("/productos/categoria/<string:categoria>", methods=["GET"])
+def get_category(categoria):
+    try:
+        return jsonify(obtener(2, categoria)), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
@@ -53,8 +57,7 @@ def get():
 @productos_bp.route("/productos/<string:nombre>", methods=["GET"])
 def get_name(nombre):
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str) if es_admin() else "true"
-        return jsonify(obtener(0, nombre, L_mostrar)), 200
+        return jsonify(obtener(0, nombre)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
@@ -64,19 +67,7 @@ def get_name(nombre):
 @productos_bp.route("/productos/<int:id>", methods=["GET"])
 def get_id(id):
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str) if es_admin() else "true"
-        return jsonify(obtener(1, id, L_mostrar)), 200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 404
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# buscar producto por categoria
-@productos_bp.route("/productos/categoria/<string:categoria>", methods=["GET"])
-def get_category(categoria):
-    try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str) if es_admin() else "true"
-        return jsonify(obtener(2, categoria, L_mostrar)), 200
+        return jsonify(obtener(1, id)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
@@ -96,51 +87,8 @@ def get_all_categories():
 @productos_bp.route("/productos/destacado", methods=["GET"])
 def get_destacados():
     try:
-        L_mostrar = request.args.get("mostrar", default=None, type=str) if es_admin() else "true"
-        return jsonify(featured(L_mostrar)), 200
+        return jsonify(featured()), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# Crear producto
-@productos_bp.route("/productos", methods=["POST"])
-@require_admin
-def post():
-    try:
-        if not request.is_json: return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
-        crear(request.json)
-        return jsonify({"message": "Producto creado exitosamente"}), 201
-    except ValidationError as e:
-        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# Modificar producto, este metodo permite cambiar los datos de un producto existente
-@productos_bp.route('/productos/<int:id>', methods=["PUT"])
-@require_admin
-def put_id(id):
-    try:
-        if not request.is_json: return jsonify({"error":"El formato de la solicitud no es JSON"}),400
-        editar(id, request.json)
-        return jsonify({"message":"Producto modificado exitosamente"}),200
-    except ValidationError as e:
-        return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-
-# Eliminar producto por id
-@productos_bp.route('/productos/<int:id>', methods=["DELETE"])
-@require_admin
-def dalete_id(id):
-    try:
-        return jsonify(eliminar(id)),200
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500

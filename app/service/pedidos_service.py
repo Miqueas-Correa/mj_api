@@ -49,42 +49,6 @@ eliminar(pedido_id):
         ValueError: Si el pedido no existe o ocurre un error al eliminarlo.
 """
 
-# GET - Listar todos o filtrados
-def listar(L_cerrado):
-    try:
-        if L_cerrado is not None:
-            if L_cerrado.lower() == 'true':
-                pedidos = Pedido.query.filter_by(cerrado=True).all()
-            elif L_cerrado.lower() == 'false':
-                pedidos = Pedido.query.filter_by(cerrado=False).all()
-            else:
-                raise ValueError("Error en el parámetro 'cerrado': debe ser 'true' o 'false'")
-        else:
-            pedidos = Pedido.query.all()
-
-        if not pedidos: raise ValueError("No se encontraron pedidos")
-
-        return [
-            {
-                "id": p.id,
-                "id_usuario": p.id_usuario,
-                "total": p.total,
-                "fecha": p.fecha,
-                "cerrado": p.cerrado,
-                "detalles": [
-                    {
-                        "producto_id": d.producto_id,
-                        "cantidad": d.cantidad,
-                        "subtotal": d.cantidad * d.productos.precio
-                    }
-                    for d in p.detalles
-                ]
-            }
-            for p in pedidos
-        ]
-    except Exception as e:
-        raise ValueError("Error al listar pedidos: " + str(e))
-
 # GET - Buscar por id, usuario o producto
 def obtener(by, valor, L_cerrado):
     try:
@@ -171,7 +135,8 @@ def editar(pedido_id, request):
     try:
         pedido = db.session.get(Pedido, pedido_id)
         if not pedido: raise ValueError("Pedido no encontrado")
-
+        # si el pedido esta cerrado, no se puede modificar
+        if pedido.cerrado: raise ValueError("No se puede modificar un pedido cerrado")
         campos_validos = {"id_usuario", "cerrado", "detalles"}
         for clave in request.keys():
             if clave not in campos_validos: raise ValueError(f"El atributo '{clave}' no existe en Pedido.")
@@ -181,7 +146,7 @@ def editar(pedido_id, request):
         modificado = False
 
         if dto.id_usuario is not None:
-            if obtener(True, dto.id_usuario) is None: raise ValueError(f"Usuario {dto.id_usuario} no encontrado")
+            if obtener(0, dto.id_usuario) is None: raise ValueError(f"Usuario {dto.id_usuario} no encontrado")
             pedido.id_usuario = dto.id_usuario
             modificado = True
 

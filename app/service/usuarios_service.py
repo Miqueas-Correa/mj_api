@@ -1,7 +1,7 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 from pydantic import ValidationError
 from app.model.token_blacklist import TokenBlacklist
-from app.model.dto.UsuariosDTO import UsuarioSalidaDTO, UsuarioEntradaDTO, UsuarioUpdateDTO
+from app.model.dto.UsuariosDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
 from app.model.usuarios_model import Usuario
 from app.extensions import db
 
@@ -63,27 +63,6 @@ logout_token(jti):
         jti (str): Identificador único del token JWT.
 """
 
-# PARA EL METODO GET
-def listar(L_activos):
-    try:
-        if L_activos is not None:
-            if L_activos.lower() == 'true':
-                usuarios = Usuario.query.filter_by(activo=True).all()
-            elif L_activos.lower() == 'false':
-                usuarios = Usuario.query.filter_by(activo=False).all()
-            else:
-                raise ValueError("Error en el parámetro 'activos' debe ser 'true' o 'false'")
-        else:
-            usuarios = Usuario.query.all()
-
-        if not usuarios:
-            raise ValueError("No se encontraron usuarios")
-
-        return [UsuarioSalidaDTO.from_model(u).__dict__ for u in usuarios]
-    except ValueError as e:
-        raise ValueError(str(e))
-    except Exception as e:
-        raise ValueError("Error al listar usuarios: " + str(e))
 
 # buscar usuario por id o por nombre
 def obtener(id):
@@ -96,7 +75,45 @@ def obtener(id):
     except Exception as e:
         raise ValueError("Error al listar usuarios: " + str(e))
 
-# PARA EL METODO POST
+def check_password(email, contrasenia):
+    try:
+        usuario = Usuario.query.filter_by(email=email).first()
+
+        if not usuario or not usuario.activo:
+            raise ValueError("Usuario no encontrado o inactivo")
+
+        if not usuario.check_password(contrasenia):
+            raise ValueError("Contraseña incorrecta")
+
+        access_token = create_access_token(
+            identity=str(usuario.id),
+            additional_claims={"rol": usuario.rol}
+        )
+        refresh_token = create_refresh_token(
+            identity=str(usuario.id),
+            additional_claims={"rol": usuario.rol}
+        )
+
+        return {
+            "token": access_token,
+            "refresh": refresh_token
+        }
+
+    except ValidationError as e:
+        raise ValueError(f"Error de validación: {e.errors()}")
+    except ValueError as e:
+        raise ValueError(str(e))
+    except Exception as e:
+        raise ValueError(f"Error al comprobar la contraseña: {str(e)}")
+
+def logout_token(jti: str):
+    if TokenBlacklist.query.filter_by(jti=jti).first():
+        return  # ya revocado
+
+    db.session.add(TokenBlacklist(jti=jti))
+    db.session.commit()
+
+# crear usuario
 def crear(request):
     try:
         if not request.get("acepta_uso_datos", False):
@@ -128,114 +145,3 @@ def crear(request):
         raise ValueError(str(e))
     except Exception as e:
         raise ValueError("Error al crear usuario: " + str(e))
-
-# PARA EL METODO PUT
-def editar(id, request, by_id):
-    try:
-        # busco por id o por nombre
-        usuario = db.session.get(Usuario, id) if by_id else Usuario.query.filter_by(nombre=id).first()
-        if not usuario: raise ValueError("Usuario no encontrado")
-
-        campos_validos = {"nombre", "email", "telefono", "contrasenia", "rol"}
-        for clave in request.keys():
-            if clave not in campos_validos: 
-                raise ValueError(f"El atributo '{clave}' no existe en Usuario.")
-
-        dto = UsuarioUpdateDTO(**request)
-        if not any([dto.nombre, dto.email, dto.telefono, dto.contrasenia, dto.rol]):
-            raise ValueError("No se proporcionaron datos para actualizar")
-
-        modificado = False
-        # Actualizar los campos del usuario
-        if dto.nombre is not None:
-            if usuario.nombre != dto.nombre and Usuario.query.filter_by(nombre=dto.nombre).first():
-                raise ValueError("El nombre de usuario ya está registrado")
-            usuario.nombre = dto.nombre
-            modificado = True
-
-        if dto.email is not None:
-            if usuario.email != dto.email and Usuario.query.filter_by(email=dto.email).first():
-                raise ValueError("El email ya está registrado")
-            usuario.email = dto.email
-            modificado = True
-
-        if dto.telefono is not None:
-            if usuario.telefono != dto.telefono and Usuario.query.filter_by(telefono=dto.telefono).first():
-                raise ValueError("El teléfono ya está registrado")
-            usuario.telefono = dto.telefono
-            modificado = True
-
-        if dto.contrasenia is not None:
-            usuario.set_password(dto.contrasenia)
-            modificado = True
-
-        if dto.rol is not None:
-            usuario.rol = dto.rol
-            modificado = True
-
-        if not modificado:
-            raise ValueError("No se pudo modificar al usuario")
-        # Guardar los cambios en la base de datos
-        db.session.commit()
-    except ValidationError as e:
-        raise ValueError(f"Error de validación: {e.errors()}")
-    except ValueError as e:
-        raise ValueError(str(e))
-    except Exception as e:
-        raise ValueError("Error al modificar el usuario: " + str(e))
-
-def check_password(email, contrasenia):
-    try:
-        usuario = Usuario.query.filter_by(email=email).first()
-
-        if not usuario or not usuario.activo:
-            raise ValueError("Usuario no encontrado o inactivo")
-
-        if not usuario.check_password(contrasenia):
-            raise ValueError("Contraseña incorrecta")
-
-        access_token = create_access_token(
-            identity=usuario.id,
-            additional_claims={"rol": usuario.rol}
-        )
-        refresh_token = create_refresh_token(identity=usuario.id)
-
-        return {
-            "token": access_token,
-            "refresh": refresh_token,
-            "usuario": {
-                "id": usuario.id,
-                "nombre": usuario.nombre,
-                "email": usuario.email,
-                "telefono": usuario.telefono,
-                "rol": usuario.rol
-            }
-        }
-
-    except ValidationError as e:
-        raise ValueError(f"Error de validación: {e.errors()}")
-    except ValueError as e:
-        raise ValueError(str(e))
-    except Exception as e:
-        raise ValueError(f"Error al comprobar la contraseña: {str(e)}")
-
-# PARA EL METODO DELETE
-def eliminar(valor, by_id):
-    try:
-        usuario = db.session.get(Usuario, valor) if by_id else Usuario.query.filter_by(nombre=valor).first()
-        if not usuario or usuario.activo == False: 
-            raise ValueError("Usuario no encontrado")
-        usuario.activo = False
-        db.session.commit()
-        return {"message": "Usuario eliminado exitosamente"}
-    except ValueError as e:
-        raise ValueError(str(e))
-    except Exception as e:
-        raise ValueError("Error al eliminar usuario: " + str(e))
-
-def logout_token(jti: str):
-    if TokenBlacklist.query.filter_by(jti=jti).first():
-        return  # ya revocado
-
-    db.session.add(TokenBlacklist(jti=jti))
-    db.session.commit()
