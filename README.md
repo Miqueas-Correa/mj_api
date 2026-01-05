@@ -1,219 +1,278 @@
-# mj_api
+MJ API – Backend
 
-API RESTful para la gestión integral de usuarios, productos y pedidos. Diseñada con una arquitectura modular, escalable y enfocada en la facilidad de integración y mantenimiento.
+Backend de la tienda virtual MJ, desarrollado como una API REST, encargado de gestionar la lógica de negocio, autenticación, seguridad y persistencia de datos de usuarios, productos y pedidos.
 
----
+Este proyecto forma parte de un sistema completo Frontend + Backend, diseñado bajo buenas prácticas de arquitectura de software y pensado para evolucionar en el tiempo.
 
-## Tabla de Contenidos
+## Tecnologías Utilizadas
 
-- [Descripción General](#descripción-general)
-- [Características Principales](#características-principales)
-- [Requisitos Previos](#requisitos-previos)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Endpoints](#endpoints)
-    - [Usuarios](#usuarios)
-    - [Productos](#productos)
-    - [Pedidos](#pedidos)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Contribuir](#contribuir)
-- [Licencia](#licencia)
+Python
 
----
+Flask
 
-## Descripción General
+Flask-JWT-Extended
 
-**mj_api** es una API desarrollada para administrar usuarios, productos y pedidos, facilitando operaciones CRUD, búsquedas avanzadas y filtrado eficiente. Su diseño modular permite una fácil extensión y mantenimiento, siendo ideal para proyectos de e-commerce o sistemas de gestión.
+Flask-SQLAlchemy
 
----
+Pydantic
 
-## Características Principales
+MySQL
 
-- Gestión completa de usuarios, productos y pedidos.
-- Filtros avanzados y búsquedas por parámetros personalizados.
-- Validación robusta de datos y manejo centralizado de errores.
-- Arquitectura modular y escalable.
-- Documentación clara y ejemplos de uso.
-- Soporte para CORS.
-- Listo para pruebas y despliegue en producción.
+Werkzeug (password hashing)
 
----
+dotenv
 
-## Requisitos Previos
+Postman (testing de endpoints)
 
-- Python 3.8 o superior
-- pip
-- (Opcional) Entorno virtual recomendado
+## Arquitectura del Proyecto
 
----
+La API está organizada siguiendo una arquitectura modular, separando responsabilidades:
 
-## Instalación
+Controladores (routes)
 
-1. Clona el repositorio:
-        ```bash
-        git clone <URL_DEL_REPOSITORIO>
-        cd mj_api
-        ```
+Servicios (lógica de negocio)
 
-2. (Opcional) Crea y activa un entorno virtual:
-        ```bash
-        python -m venv venv
-        # En Linux/MacOS:
-        source venv/bin/activate
-        # En Windows:
-        .\venv\Scripts\Activate.ps1
-        ```
+Modelos (base de datos)
 
-3. Instala las dependencias:
-        ```bash
-        pip install -r requirements.txt
-        ```
+Validaciones
 
----
+Seguridad (JWT)
 
-## Uso
+Esto permite:
 
-1. Inicia la aplicación:
-        ```bash
-        flask --app app.app:create_app run
-        Opcion 2:
-        python -m app.app
-        ```
-2. Accede a la API en [http://localhost:5000/](http://localhost:5000/)
+Escalabilidad
 
----
+Mantenimiento sencillo
 
-## Endpoints
-
-### Usuarios
-
-- `GET /usuarios`  
-    Lista todos los usuarios. Permite filtrar por estado activo.
-
-- `GET /usuarios?activos=true|false`  
-    Filtra usuarios activos/inactivos.
-
-- `GET /usuarios/<nombre|id>`  
-    Busca usuario por nombre o ID.
-
-- `POST /usuarios`  
-    Crea un nuevo usuario.  
-    **Body ejemplo:**
-    ```json
-    {
-        "nombre": "Nombre",
-        "email": "correo@ejemplo.com",
-        "telefono": "2914439242",
-        "contrasenia": "contraseña"
-    }
-    ```
-
-- `PUT /usuarios/<id|nombre>`  
-    Modifica datos del usuario.
-
-- `DELETE /usuarios/<id|nombre>`  
-    Elimina un usuario.
-
----
-
-### Productos
-
-- `GET /productos`  
-    Lista todos los productos. Permite filtrar por visibilidad (`mostrar`).
-
-- `GET /productos?mostrar=true|false`  
-    Filtra productos visibles/ocultos.
-
-- `GET /productos/<id|nombre>?mostrar=true|false`  
-    Busca productos por ID o nombre.
-
-- `GET /productos/categoria/<nombre>?mostrar=true|false`  
-    Lista productos por categoría.
-
-- `GET /productos/categoria`  
-    Lista todas las categorías de productos.
-
-- `GET /productos/destacado?mostrar=true|false`  
-    Lista productos destacados.
-
-- `POST /productos`  
-    Crea un producto.  
-    **Body ejemplo:**
-    ```json
-    {
-        "categoria": "Categoria",
-        "descripcion": "Descripción",
-        "imagen_url": "https://...",
-        "mostrar": true,
-        "destacado": false,
-        "nombre": "Nombre",
-        "precio": 19999.99,
-        "stock": 10
-    }
-    ```
-
-- `PUT /productos/<id|nombre>`  
-    Modifica datos del producto.
-
----
-
-### Pedidos
-
-- `GET /pedidos`  
-    Lista todos los pedidos. Permite filtrar por estado (`cerrado`).
-
-- `GET /pedidos/<id>?cerrado=true|false`  
-    Busca pedido por ID.
-
-- `GET /pedidos/usuario/<id>?cerrado=true|false`  
-    Lista pedidos de un usuario.
-
-- `GET /pedidos/producto/<id>?cerrado=true|false`  
-    Lista pedidos que incluyen un producto.
-
-- `POST /pedidos`  
-    Crea un pedido.  
-    **Body ejemplo:**
-    ```json
-    {
-        "id_usuario": 1,
-        "codigo_producto": 3,
-        "total": 0
-    }
-    ```
-
-- `PUT /pedidos/<id>`  
-    Modifica un pedido.
-
-- `DELETE /pedidos/<id>`  
-    Elimina un pedido.
-
----
+Código limpio y testeable
 
 ## Estructura del Proyecto
+- mj_api/
+- │
+- ├── app/
+- │   ├── app.py
+- │   ├── config.py
+- │   ├── extensions.py
+- │
+- │   ├── controllers/
+- │   │   ├── auth_controller.py
+- │   │   ├── usuarios_controller.py
+- │   │   ├── productos_controller.py
+- │   │   └── pedidos_controller.py
+- │
+- │   ├── models/
+- │   │   ├── usuario.py
+- │   │   ├── producto.py
+- │   │   ├── pedido.py
+- │   │   └── token_blacklist.py
+- │
+- │   ├── schemas/
+- │   │   ├── usuario_schema.py
+- │   │   ├── producto_schema.py
+- │   │   └── pedido_schema.py
+- │
+- │   ├── services/
+- │   │   ├── usuarios_service.py
+- │   │   ├── productos_service.py
+- │   │   └── pedidos_service.py
+- │
+- │   └── utils/
+- │       └── security.py
+- │
+- ├── migrations/
+- ├── tests/
+- │
+- ├── .env.example
+- ├── requirements.txt
+- ├── run.py
+- └── README.md
 
-```
-mj_api/
-├── controller/
-├── model/
-├── view/
-├── service/
-├── tests/
-├── app.py
-├── requirements.txt
-└── README.md
-```
+## Autenticación y Seguridad
 
----
+La API utiliza JWT (JSON Web Tokens) para la autenticación.
 
-## Contribuir
+Características:
 
-Las contribuciones son bienvenidas. Por favor, abre un _issue_ para reportar errores o sugerir mejoras, o envía un _pull request_ para contribuir directamente.
+Login con token de acceso
 
----
+Refresh token
 
-## Licencia
+Logout con blacklist de tokens
 
-Este proyecto está licenciado bajo los términos de la licencia MIT.
+Protección de rutas
 
----
+Roles de usuario (cliente / administrador)
+
+Esto garantiza:
+
+Seguridad
+
+Control de acceso
+
+Buenas prácticas reales de backend
+
+## Base de Datos
+
+Base de datos relacional MySQL, modelada con SQLAlchemy.
+
+- Entidades principales:
+
+* Usuarios
+
+* Productos
+
+* Pedidos
+
+* Tokens revocados
+
+## Endpoints Principales
+- Autenticación
+
+POST /auth/login
+
+POST /auth/logout
+
+POST /auth/refresh
+
+- Usuarios
+
+GET /usuarios
+
+POST /usuarios
+
+PUT /usuarios/{id}
+
+DELETE /usuarios/{id}
+
+- Productos
+
+GET /productos
+
+POST /productos
+
+PUT /productos/{id}
+
+DELETE /productos/{id}
+
+- Pedidos
+
+GET /pedidos
+
+POST /pedidos
+
+GET /pedidos/{id}
+
+📌 Todos los endpoints protegidos requieren token JWT.
+
+## Instalación y Ejecución
+1️⃣ Clonar el repositorio
+git clone https://github.com/Miqueas-Correa/mj_api.git
+cd mj_api
+
+2️⃣ Crear entorno virtual
+python -m venv venv
+source venv/bin/activate  # Linux / Mac
+venv\Scripts\activate     # Windows
+
+3️⃣ Instalar dependencias
+pip install -r requirements.txt
+
+4️⃣ Variables de entorno
+
+Crear un archivo .env basado en .env.example
+- Base de datos
+DB_HOST=
+DB_PORT=
+DB_USER=
+DB_PASSWORD=
+DB_NAME=mj_db
+
+- Entorno
+FLASK_ENV=production
+DEBUG=False
+
+- Seguridad
+JWT_SECRET_KEY=your_jwt_secret_key
+
+- CORS
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+
+- Backend
+BACKEND_URL=http://localhost:5000
+
+## Ejecutar la API
+python -m app.app
+
+
+Servidor disponible en:
+
+http://localhost:5000
+
+## Testing
+
+Tests unitarios incluidos
+
+Endpoints testeados con Postman
+
+Colección Postman incluida como parte de la documentación
+
+## Integración con el Frontend
+
+Este backend es consumido por el frontend MJ Frontend (React + Vite).
+
+La separación entre:
+
+Cliente público
+
+Cliente administrador
+
+permite un sistema seguro y escalable.
+
+## Despliegue
+
+El backend está preparado para ser desplegado en plataformas como:
+
+Render
+
+Railway
+
+Heroku
+
+Incluye:
+
+Variables de entorno
+
+Configuración productiva
+
+Manejo de migraciones
+
+## Proyecto en Evolución
+
+El backend de MJ está diseñado para seguir creciendo.
+Entre las mejoras planificadas:
+
+Historial de pedidos
+
+Estados de pedido
+
+Roles avanzados
+
+Reportes y métricas
+
+Paginación y filtros
+
+Optimización de consultas
+
+## Autor
+
+Miqueas Correa
+Backend / Full Stack Developer
+📍 Bahía Blanca, Buenos Aires, Argentina
+
+GitHub: Miqueas-Correa
+
+LinkedIn: miqueas-correa
+
+## 📌 Notas Finales
+
+Este backend representa una API REST realista, segura y escalable, alineada con prácticas profesionales y académicas, integrándose con un frontend moderno para conformar la tienda virtual MJ.
