@@ -1,4 +1,4 @@
-MJ API – Backend
+# MJ API – Backend
 
 Backend de la tienda virtual MJ, desarrollado como una API REST, encargado de gestionar la lógica de negocio, autenticación, seguridad y persistencia de datos de usuarios, productos y pedidos.
 
