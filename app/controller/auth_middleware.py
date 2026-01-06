@@ -11,7 +11,6 @@ Funciones:
 
 def require_admin(fn):
     @wraps(fn)
-    @jwt_required()
     def wrapper(*args, **kwargs):
         claims = get_jwt()
         if claims.get("rol") != "admin":

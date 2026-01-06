@@ -11,7 +11,7 @@ from app.service.usuarios_service import check_password, crear, logout_token, ob
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-@auth_bp.route("/login", methods=["POST"])
+@auth_bp.route("/login", methods=["POST"])  #✅ Probado en postman
 def login():
     if not request.is_json: 
         return jsonify({"error":"El formato de la solicitud no es JSON"}), 400
@@ -37,7 +37,7 @@ def login():
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-@auth_bp.route("/register", methods=["POST"])
+@auth_bp.route("/register", methods=["POST"])   #✅ Probado en postman
 def register():
     if not request.is_json: 
         return jsonify({"error":"El formato de la solicitud no es JSON"}), 400
@@ -53,14 +53,14 @@ def register():
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-@auth_bp.route("/logout", methods=["POST"])
+@auth_bp.route("/logout", methods=["POST"])     #✅ Probado en postman
 @jwt_required()
 def logout():
     jti = get_jwt()["jti"]
     logout_token(jti)
     return jsonify({"message": "Logout OK"}), 200
 
-@auth_bp.route("/refresh", methods=["POST"])
+@auth_bp.route("/refresh", methods=["POST"])    #✅ Probado en postman
 @jwt_required(refresh=True)
 def refresh():
     old_jti = get_jwt()["jti"]
