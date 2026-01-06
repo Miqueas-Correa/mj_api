@@ -101,4 +101,5 @@ class UsuarioUpdateDTO(BaseModel):
     email: Optional[EmailStr] = None
     telefono: Optional[str] = Field(None, pattern=r"^\+?\d[\d\s\-]{7,19}$")
     contrasenia: Optional[str] = Field(None, min_length=6, max_length=100)
+    activo: Optional[bool] = None
     rol: Optional[str] = Field(None, pattern="^(cliente|admin)$")

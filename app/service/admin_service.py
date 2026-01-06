@@ -224,24 +224,13 @@ def obtener_usuario(id):
         raise ValueError("Error al listar usuarios: " + str(e))
 
 # editar usuario
-def editar_usuario(user_id, request, es_admin=False):
+def editar_usuario(user_id, request):
     try:
         usuario = db.session.get(Usuario, user_id)
         if not usuario: 
             raise ValueError("Usuario no encontrado")
-
-        campos_validos = {"nombre", "email", "telefono", "contrasenia"}
-
-        if es_admin:
-            campos_validos.add("rol")
-            campos_validos.add("activo")
-
-        for clave in request.keys():
-            if clave not in campos_validos: 
-                raise ValueError(f"No tienes permiso para modificar '{clave}'")
-
         dto = UsuarioUpdateDTO(**request)
-        if not any([dto.nombre, dto.email, dto.telefono, dto.contrasenia, dto.rol if es_admin else None]):
+        if not request:
             raise ValueError("No se proporcionaron datos para actualizar")
 
         modificado = False
@@ -266,13 +255,13 @@ def editar_usuario(user_id, request, es_admin=False):
             usuario.set_password(dto.contrasenia)
             modificado = True
 
-        if es_admin and dto.rol is not None:
+        if dto.rol is not None:
             if dto.rol not in ["cliente", "admin"]:
                 raise ValueError("El rol debe ser 'cliente' o 'admin'")
             usuario.rol = dto.rol
             modificado = True
 
-        if es_admin and "activo" in request:
+        if "activo" in request:
             usuario.activo = request["activo"]
             modificado = True
 
@@ -407,7 +396,7 @@ def editar_pedido(pedido_id, request):
         dto = PedidoUpdateDTO(**request)
         if not any([dto.id_usuario, dto.cerrado is not None, dto.detalles]):
             raise ValueError("No se proporcionaron datos para actualizar")
-        
+
         modificado = False
 
         if dto.id_usuario is not None:
@@ -417,12 +406,10 @@ def editar_pedido(pedido_id, request):
             pedido.id_usuario = dto.id_usuario
             modificado = True
 
-        # ✅ CORRECCIÓN: Permitir actualizar cerrado explícitamente
         if dto.cerrado is not None:
             pedido.cerrado = dto.cerrado
             modificado = True
 
-        # Actualizar detalles si se proporcionan
         if dto.detalles is not None:
             nuevos_detalles = []
             total = 0

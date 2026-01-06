@@ -1,4 +1,4 @@
-from tkinter import Image
+from PIL import Image
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
@@ -27,9 +27,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def validate_image(file_stream):
-    """
-    Valida que el archivo sea realmente una imagen y no un archivo malicioso.
-    """
     try:
         img = Image.open(file_stream)
         img.verify()  # Verifica que sea una imagen válida
@@ -71,7 +68,7 @@ def get_base_url():
     return base_url
 
 # Ruta para subir imágenes con todas las validaciones
-@admin_bp.route('/upload-image', methods=['POST'])
+@admin_bp.route('/upload-image', methods=['POST'])  #✅ Probado en postman
 @jwt_required()
 @require_admin
 def upload_image_endpoint():
@@ -134,7 +131,7 @@ def upload_image_endpoint():
         return jsonify({'error': 'Error al subir la imagen', 'detalle': str(e)}), 500
 
 # Ruta para eliminar imágenes (opcional pero recomendado)
-@admin_bp.route('/delete-image', methods=['DELETE'])
+@admin_bp.route('/delete-image', methods=['DELETE'])    #✅ Probado en postman
 @jwt_required()
 @require_admin
 def delete_image_endpoint():
@@ -165,7 +162,7 @@ def delete_image_endpoint():
         return jsonify({'error': 'Error al eliminar la imagen', 'detalle': str(e)}), 500
 
 # Listar Productos
-@admin_bp.route("/productos", methods=["GET"])
+@admin_bp.route("/productos", methods=["GET"]) # ✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_productos():
@@ -178,7 +175,7 @@ def get_productos():
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar producto por nombre
-@admin_bp.route("/productos/<string:nombre>", methods=["GET"])
+@admin_bp.route("/productos/<string:nombre>", methods=["GET"]) #✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_producto_by_name(nombre):
@@ -191,7 +188,7 @@ def get_producto_by_name(nombre):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar producto por id
-@admin_bp.route("/productos/<int:id>", methods=["GET"])
+@admin_bp.route("/productos/<int:id>", methods=["GET"]) #✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_producto_by_id(id):
@@ -204,19 +201,20 @@ def get_producto_by_id(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar producto por categoria
-@admin_bp.route("/productos/categoria/<string:categoria>", methods=["GET"])
+@admin_bp.route("/productos/categoria/<string:categoria>", methods=["GET"]) #✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_producto_by_category(categoria):
     try:
-        return jsonify(obtener_productos(2, categoria)), 200
+        L_mostrar = request.args.get("mostrar", default=None, type=str)
+        return jsonify(obtener_productos(2, categoria, L_mostrar)), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 404
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Crear producto
-@admin_bp.route("/productos", methods=["POST"])
+@admin_bp.route("/productos", methods=["POST"])     #✅ Probado en postman
 @jwt_required()
 @require_admin
 def post_producto():
@@ -233,7 +231,7 @@ def post_producto():
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Modificar producto
-@admin_bp.route('/productos/<int:id>', methods=["PUT"])
+@admin_bp.route('/productos/<int:id>', methods=["PUT"]) # ✅ Probado en postman
 @jwt_required()
 @require_admin
 def put_producto(id):
@@ -250,7 +248,7 @@ def put_producto(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Eliminar producto por id
-@admin_bp.route('/productos/<int:id>', methods=["DELETE"])
+@admin_bp.route('/productos/<int:id>', methods=["DELETE"])  #✅ Probado en postman
 @jwt_required()
 @require_admin
 def delete_producto(id):
@@ -266,7 +264,7 @@ def delete_producto(id):
 """
 
 # Listar todos los usuarios
-@admin_bp.route("/usuarios", methods=["GET"])
+@admin_bp.route("/usuarios", methods=["GET"])   # ✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_usuarios():
@@ -278,7 +276,7 @@ def get_usuarios():
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-@admin_bp.route("/usuarios/<int:id>", methods=["GET"])
+@admin_bp.route("/usuarios/<int:id>", methods=["GET"])  #✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_usuario_by_id(id):
@@ -289,15 +287,15 @@ def get_usuario_by_id(id):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Modificar usuario
-@admin_bp.route('/usuarios/<int:id>', methods=["PUT"])
+# Modificar usuario, puede modificar todos los campos pero actualmente solo activo y rol
+@admin_bp.route('/usuarios/<int:id>', methods=["PUT"])  #✅ Probado en postman
 @jwt_required()
 @require_admin
 def put_usuario(id):
     if not request.is_json: 
         return jsonify({"error":"El formato de la solicitud no es JSON"}), 400
     try:
-        editar_usuario(id, request.json, es_admin=True)
+        editar_usuario(id, request.json)
         return jsonify({"message":"Usuario modificado exitosamente"}), 200
     except ValidationError as e:
         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
@@ -307,7 +305,7 @@ def put_usuario(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Eliminar usuario (cambiar su estado a inactivo)
-@admin_bp.route('/usuarios/<int:id>', methods=["DELETE"])
+@admin_bp.route('/usuarios/<int:id>', methods=["DELETE"])   #✅ Probado en postman
 @jwt_required()
 @require_admin
 def delete_usuario(id):
@@ -323,7 +321,7 @@ def delete_usuario(id):
 """
 
 # Listar todos los pedidos
-@admin_bp.route("/pedidos", methods=["GET"])
+@admin_bp.route("/pedidos", methods=["GET"])    # ✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_pedidos():
@@ -336,7 +334,7 @@ def get_pedidos():
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar pedido por id usuario
-@admin_bp.route("/pedidos/usuario/<int:id>", methods=["GET"])
+@admin_bp.route("/pedidos/usuario/<int:id>", methods=["GET"])   #✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_pedido_by_usuario(id):
@@ -349,7 +347,7 @@ def get_pedido_by_usuario(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar pedido por id
-@admin_bp.route("/pedidos/<int:id>", methods=["GET"])
+@admin_bp.route("/pedidos/<int:id>", methods=["GET"])   #✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_pedido_by_id(id):
@@ -362,7 +360,7 @@ def get_pedido_by_id(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar pedido por codigo producto
-@admin_bp.route("/pedidos/producto/<int:codigo>", methods=["GET"])
+@admin_bp.route("/pedidos/producto/<int:codigo>", methods=["GET"])  #✅ Probado en postman
 @jwt_required()
 @require_admin
 def get_pedido_by_producto(codigo):
@@ -374,8 +372,8 @@ def get_pedido_by_producto(codigo):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Modificar pedido
-@admin_bp.route('/pedidos/<int:id>', methods=["PUT"])
+# Modificar pedido, actualmente no se usa pero queda para futuras mejoras, solo habre y cierra el pedido
+@admin_bp.route('/pedidos/<int:id>', methods=["PUT"])   # ✅ Probado en postman
 @jwt_required()
 @require_admin
 def put_pedido(id):
@@ -391,8 +389,8 @@ def put_pedido(id):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Eliminar pedido por id
-@admin_bp.route('/pedidos/<int:id>', methods=["DELETE"])
+# Eliminar pedido por id, actualmente no se eliminan pedidos, solo queda la ruta para futuras mejoras
+@admin_bp.route('/pedidos/<int:id>', methods=["DELETE"])    #✅ Probado en postman
 @jwt_required()
 @require_admin
 def delete_pedido(id):
