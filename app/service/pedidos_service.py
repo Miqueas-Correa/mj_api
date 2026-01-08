@@ -6,47 +6,7 @@ from app.extensions import db
 from app.service.usuarios_service import obtener
 
 """
-Módulo de servicio para la gestión de pedidos.
-Funciones:
------------
-listar(L_cerrado):
-    Lista todos los pedidos o los filtra según el estado de cerrado.
-    Parámetros:
-        L_cerrado (str | None): Si se proporciona, debe ser 'true' o 'false' para filtrar pedidos cerrados o abiertos.
-    Retorna:
-        Lista de diccionarios con la información de los pedidos y sus detalles.
-    Excepciones:
-        ValueError: Si hay un error en los parámetros o no se encuentran pedidos.
-obtener(by, valor, L_cerrado):
-    Obtiene pedidos filtrando por ID de usuario, ID de pedido o ID de producto.
-    Parámetros:
-        by (int): 0 para buscar por usuario, 1 por pedido, 2 por producto.
-        valor (str | int): Valor a buscar según el filtro.
-        L_cerrado (str | None): Si se proporciona, filtra por estado de cerrado ('true' o 'false').
-    Retorna:
-        Lista de diccionarios con la información de los pedidos y sus detalles.
-    Excepciones:
-        ValueError: Si hay un error en los parámetros o no se encuentran pedidos.
-crear(data):
-    Crea un nuevo pedido con los productos especificados.
-    Parámetros:
-        data (dict): Debe contener 'id_usuario' y una lista de 'productos' con 'producto_id' y 'cantidad'.
-    Excepciones:
-        ValueError: Si hay un error al crear el pedido o algún producto no existe.
-editar(pedido_id, request):
-    Edita un pedido existente.
-    Parámetros:
-        pedido_id (int): ID del pedido a modificar.
-        request (dict): Datos a actualizar (puede incluir 'id_usuario', 'cerrado', 'detalles').
-    Excepciones:
-        ValidationError: Si los datos no cumplen con el esquema esperado.
-        ValueError: Si hay un error en los datos o el pedido no existe.
-eliminar(pedido_id):
-    Elimina un pedido existente.
-    Parámetros:
-        pedido_id (int): ID del pedido a eliminar.
-    Excepciones:
-        ValueError: Si el pedido no existe o ocurre un error al eliminarlo.
+Módulo de servicio para la gestión de pedidos con control de stock.
 """
 
 # GET - Buscar por id, usuario o producto
@@ -99,26 +59,49 @@ def obtener(by, valor, L_cerrado):
     except Exception as e:
         raise ValueError("Error al obtener pedidos: " + str(e))
 
-# POST - Crear nuevo pedido
+# POST - Crear nuevo pedido con validación de stock
 def crear(data):
     try:
         id_usuario = data["id_usuario"]
         productos_data = data["productos"]
 
-        pedido = Pedido(id_usuario=id_usuario, total=0)
-        total = 0
-
+        # Primero validar que todos los productos existan y tengan stock suficiente
+        productos_validados = []
         for item in productos_data:
             producto = db.session.get(Producto, item["producto_id"])
             if not producto:
                 raise ValueError(f"Producto {item['producto_id']} no encontrado")
+            
+            # Validar stock disponible
+            if producto.stock < item["cantidad"]:
+                raise ValueError(f"Stock insuficiente para '{producto.nombre}'. Disponible: {producto.stock}, solicitado: {item['cantidad']}")
+            
+            productos_validados.append({
+                "producto": producto,
+                "cantidad": item["cantidad"]
+            })
 
-            subtotal = producto.precio * item["cantidad"]
+        # Si todo está bien, crear el pedido y descontar stock
+        pedido = Pedido(id_usuario=id_usuario, total=0)
+        total = 0
+
+        for item in productos_validados:
+            producto = item["producto"]
+            cantidad = item["cantidad"]
+            
+            subtotal = producto.precio * cantidad
             total += subtotal
+
+            # Descontar stock
+            producto.stock -= cantidad
+            
+            # Ocultar producto si se agota el stock
+            if producto.stock <= 0:
+                producto.mostrar = False
 
             detalle = PedidoDetalle(
                 producto_id=producto.id,
-                cantidad=item["cantidad"]
+                cantidad=cantidad
             )
             pedido.detalles.append(detalle)
 
@@ -158,13 +141,37 @@ def editar(pedido_id, request):
         total = 0
 
         if dto.detalles is not None:
+            # Primero devolver el stock de los productos actuales
+            for detalle_actual in pedido.detalles:
+                producto_actual = db.session.get(Producto, detalle_actual.producto_id)
+                if producto_actual:
+                    producto_actual.stock += detalle_actual.cantidad
+                    # Mostrar el producto si vuelve a tener stock
+                    if producto_actual.stock > 0:
+                        producto_actual.mostrar = True
+            
+            # Validar nuevo stock antes de actualizar
             for item in dto.detalles:
                 producto = db.session.get(Producto, item.producto_id)
                 if not producto:
                     raise ValueError(f"Producto {item.producto_id} no encontrado")
+                
+                if producto.stock < item.cantidad:
+                    raise ValueError(f"Stock insuficiente para '{producto.nombre}'. Disponible: {producto.stock}, solicitado: {item.cantidad}")
 
+            # Si todo está bien, actualizar
+            for item in dto.detalles:
+                producto = db.session.get(Producto, item.producto_id)
+                
                 subtotal = producto.precio * item.cantidad
                 total += subtotal
+
+                # Descontar el nuevo stock
+                producto.stock -= item.cantidad
+                
+                # Ocultar producto si se agota
+                if producto.stock <= 0:
+                    producto.mostrar = False
 
                 detalle = PedidoDetalle(
                     producto_id=item.producto_id,
@@ -190,11 +197,54 @@ def editar(pedido_id, request):
         db.session.rollback()
         raise ValueError("Error al modificar el pedido: " + str(e))
 
-# DELETE - Eliminar pedido
+# NUEVO - Cancelar pedido y devolver stock
+def cancelar(pedido_id, id_usuario):
+    try:
+        pedido = db.session.get(Pedido, pedido_id)
+        if not pedido: 
+            raise ValueError("Pedido no encontrado")
+        
+        # Validar que el pedido pertenece al usuario (comparar como string)
+        if str(pedido.id_usuario) != str(id_usuario):
+            raise ValueError(f"No tienes permiso para cancelar este pedido. Usuario del pedido: {pedido.id_usuario}, Usuario actual: {id_usuario}")
+        
+        # No se puede cancelar un pedido ya cerrado
+        if pedido.cerrado: 
+            raise ValueError("No se puede cancelar un pedido ya finalizado")
+        
+        # Devolver el stock de todos los productos
+        for detalle in pedido.detalles:
+            producto = db.session.get(Producto, detalle.producto_id)
+            if producto:
+                producto.stock += detalle.cantidad
+                # Mostrar el producto si vuelve a tener stock
+                if producto.stock > 0:
+                    producto.mostrar = True
+        
+        # Eliminar el pedido
+        db.session.delete(pedido)
+        db.session.commit()
+        
+    except ValueError as e:
+        db.session.rollback()
+        raise
+    except Exception as e:
+        db.session.rollback()
+        raise ValueError("Error al cancelar el pedido: " + str(e))
+
+# DELETE - Eliminar pedido (devuelve stock automáticamente)
 def eliminar(pedido_id):
     try:
         pedido = db.session.get(Pedido, pedido_id)
         if not pedido: raise ValueError("Pedido no encontrado")
+
+        # Devolver stock antes de eliminar
+        for detalle in pedido.detalles:
+            producto = db.session.get(Producto, detalle.producto_id)
+            if producto:
+                producto.stock += detalle.cantidad
+                if producto.stock > 0:
+                    producto.mostrar = True
 
         db.session.delete(pedido)
         db.session.commit()
