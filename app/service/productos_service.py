@@ -80,7 +80,9 @@ def obtener(by, valor):
         if by == 1:
             producto = db.session.get(Producto, valor)
             if not producto: raise ValueError(f"Producto {valor} no fue encontrado")
-            productos = [producto]
+            # IMPORTANTE: Al buscar por ID, devolver el producto aunque esté oculto
+            # Esto permite ver detalles de pedidos con productos que ya no están disponibles
+            return [ProductoSalidaDTO.from_model(producto).__dict__]
 
         elif by == 0:
             productos = Producto.query.filter(Producto.nombre.like(f"%{valor}%")).all()
@@ -90,6 +92,7 @@ def obtener(by, valor):
             productos = Producto.query.filter(db.func.lower(Producto.categoria) == valor.lower()).all()
             if not productos: raise ValueError(f"No se encontraron productos en la categoría '{valor}'")
 
+        # Solo filtrar por mostrar=True cuando NO se busca por ID
         productos = [p for p in productos if p.mostrar == True]
 
         if not productos: raise ValueError("No se encontraron productos")
@@ -119,3 +122,34 @@ def featured():
         raise ValueError(str(e))
     except Exception as e:
         raise ValueError("Error al listar productos destacados: " + str(e))
+
+# Actualizar stock de un producto
+def actualizar_stock(producto_id, cantidad):
+    """
+    Actualiza el stock de un producto sin restricciones de admin.
+    Útil para operaciones internas del sistema.
+    
+    Parámetros:
+        producto_id (int): ID del producto
+        cantidad (int): Nueva cantidad de stock
+    """
+    try:
+        producto = db.session.get(Producto, producto_id)
+        if not producto:
+            raise ValueError(f"Producto {producto_id} no encontrado")
+        
+        producto.stock = cantidad
+        
+        # Ocultar/mostrar según stock
+        if cantidad <= 0:
+            producto.mostrar = False
+        else:
+            producto.mostrar = True
+        
+        db.session.commit()
+        
+        return ProductoSalidaDTO.from_model(producto).__dict__
+        
+    except Exception as e:
+        db.session.rollback()
+        raise ValueError("Error al actualizar stock: " + str(e))
