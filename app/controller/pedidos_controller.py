@@ -1,7 +1,18 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
-from app.service.pedidos_service import crear, editar, obtener, cancelar
+from app.service.pedidos_service import crear, obtener, cancelar
+"""
+Controlador de pedidos para la API.
+Rutas:
+    - GET /pedidos/me: Lista los pedidos del usuario autenticado. Permite filtrar por estado 'cerrado' mediante parámetro de consulta.
+    - POST /pedidos: Crea un nuevo pedido para el usuario autenticado. Requiere datos en formato JSON.
+    - DELETE /pedidos/<int:id>/cancelar: Cancela un pedido específico del usuario autenticado y devuelve el stock correspondiente.
+Decoradores:
+    - Todas las rutas requieren autenticación JWT.
+Manejo de errores:
+    - Devuelve mensajes de error claros para errores de validación, errores de valor y errores internos del servidor.
+"""
 
 pedidos_bp = Blueprint("pedidos", __name__)
 
@@ -37,24 +48,7 @@ def post():
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Modificar pedido
-# @pedidos_bp.route('/pedidos/<int:id>', methods=["PUT"])
-# @jwt_required()
-# def put(id):
-#     try:
-#         if not request.is_json: 
-#             return jsonify({"error": "El formato de la solicitud no es JSON"}), 400
-
-#         editar(id, request.json)
-#         return jsonify({"message": "Pedido modificado exitosamente"}), 200
-#     except ValidationError as e:
-#         return jsonify({"error": "Error de validación", "detalles": e.errors()}), 400
-#     except ValueError as e:
-#         return jsonify({"error": str(e)}), 400
-#     except Exception as e:
-#         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
-
-# NUEVO - Cancelar pedido (devuelve stock)
+# Cancelar pedido
 @pedidos_bp.route('/pedidos/<int:id>/cancelar', methods=["DELETE"])
 @jwt_required()
 def delete_cancelar(id):

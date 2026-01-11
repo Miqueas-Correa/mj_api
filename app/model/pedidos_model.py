@@ -25,7 +25,6 @@ Clases:
             productos (Producto): Relación con el producto asociado.
 """
 
-# Definición del modelo de pedidos
 class Pedido(db.Model):
     __tablename__ = "pedidos"
     id = db.Column(db.Integer, primary_key=True)

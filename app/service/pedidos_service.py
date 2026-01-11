@@ -4,9 +4,47 @@ from app.model.pedidos_model import Pedido, PedidoDetalle
 from app.model.productos_model import Producto
 from app.extensions import db
 from app.service.usuarios_service import obtener
-
 """
-Módulo de servicio para la gestión de pedidos con control de stock.
+Servicio para la gestión de pedidos.
+Funciones:
+-----------
+obtener(by, valor, L_cerrado)
+    Obtiene pedidos filtrados por ID de pedido, ID de usuario o ID de producto, y opcionalmente por estado de cerrado.
+    Parámetros:
+        by (int): 0 para buscar por usuario, 1 por pedido, 2 por producto.
+        valor (str/int): Valor a buscar según el tipo.
+        L_cerrado (str|None): 'true' o 'false' para filtrar por cerrado.
+    Retorna:
+        list[dict]: Lista de pedidos con sus detalles.
+    Excepciones:
+        ValueError: Si hay errores de parámetros o no se encuentran pedidos.
+crear(data)
+    Crea un nuevo pedido validando existencia y stock de productos.
+    Parámetros:
+        data (dict): Debe contener 'id_usuario' y lista de productos con 'producto_id' y 'cantidad'.
+    Excepciones:
+        ValueError: Si hay errores de stock, productos inexistentes o problemas al crear el pedido.
+editar(pedido_id, request)
+    Edita un pedido existente, permitiendo modificar usuario, cerrado y detalles.
+    Parámetros:
+        pedido_id (int): ID del pedido a modificar.
+        request (dict): Datos a actualizar (id_usuario, cerrado, detalles).
+    Excepciones:
+        ValueError: Si el pedido no existe, está cerrado, datos inválidos o problemas de stock.
+        ValidationError: Si los datos no cumplen el esquema DTO.
+cancelar(pedido_id, id_usuario)
+    Cancela un pedido, devolviendo el stock de los productos y eliminando el pedido.
+    Parámetros:
+        pedido_id (int): ID del pedido a cancelar.
+        id_usuario (int|str): ID del usuario que solicita la cancelación.
+    Excepciones:
+        ValueError: Si el pedido no existe, no pertenece al usuario, está cerrado o hay errores al cancelar.
+eliminar(pedido_id)
+    Elimina un pedido y devuelve el stock de los productos asociados.
+    Parámetros:
+        pedido_id (int): ID del pedido a eliminar.
+    Excepciones:
+        ValueError: Si el pedido no existe o hay errores al eliminar.
 """
 
 # GET - Buscar por id, usuario o producto
@@ -59,7 +97,7 @@ def obtener(by, valor, L_cerrado):
     except Exception as e:
         raise ValueError("Error al obtener pedidos: " + str(e))
 
-# POST - Crear nuevo pedido con validación de stock
+# POST - Crear nuevo pedido con validacion de stock
 def crear(data):
     try:
         id_usuario = data["id_usuario"]
@@ -71,31 +109,29 @@ def crear(data):
             producto = db.session.get(Producto, item["producto_id"])
             if not producto:
                 raise ValueError(f"Producto {item['producto_id']} no encontrado")
-            
+
             # Validar stock disponible
             if producto.stock < item["cantidad"]:
                 raise ValueError(f"Stock insuficiente para '{producto.nombre}'. Disponible: {producto.stock}, solicitado: {item['cantidad']}")
-            
+
             productos_validados.append({
                 "producto": producto,
                 "cantidad": item["cantidad"]
             })
 
-        # Si todo está bien, crear el pedido y descontar stock
+        # crear el pedido y descontar stock
         pedido = Pedido(id_usuario=id_usuario, total=0)
         total = 0
 
         for item in productos_validados:
             producto = item["producto"]
             cantidad = item["cantidad"]
-            
+
             subtotal = producto.precio * cantidad
             total += subtotal
 
-            # Descontar stock
             producto.stock -= cantidad
-            
-            # Ocultar producto si se agota el stock
+
             if producto.stock <= 0:
                 producto.mostrar = False
 
@@ -149,26 +185,26 @@ def editar(pedido_id, request):
                     # Mostrar el producto si vuelve a tener stock
                     if producto_actual.stock > 0:
                         producto_actual.mostrar = True
-            
+
             # Validar nuevo stock antes de actualizar
             for item in dto.detalles:
                 producto = db.session.get(Producto, item.producto_id)
                 if not producto:
                     raise ValueError(f"Producto {item.producto_id} no encontrado")
-                
+
                 if producto.stock < item.cantidad:
                     raise ValueError(f"Stock insuficiente para '{producto.nombre}'. Disponible: {producto.stock}, solicitado: {item.cantidad}")
 
             # Si todo está bien, actualizar
             for item in dto.detalles:
                 producto = db.session.get(Producto, item.producto_id)
-                
+
                 subtotal = producto.precio * item.cantidad
                 total += subtotal
 
                 # Descontar el nuevo stock
                 producto.stock -= item.cantidad
-                
+
                 # Ocultar producto si se agota
                 if producto.stock <= 0:
                     producto.mostrar = False
@@ -203,15 +239,15 @@ def cancelar(pedido_id, id_usuario):
         pedido = db.session.get(Pedido, pedido_id)
         if not pedido: 
             raise ValueError("Pedido no encontrado")
-        
+
         # Validar que el pedido pertenece al usuario (comparar como string)
         if str(pedido.id_usuario) != str(id_usuario):
             raise ValueError(f"No tienes permiso para cancelar este pedido. Usuario del pedido: {pedido.id_usuario}, Usuario actual: {id_usuario}")
-        
+
         # No se puede cancelar un pedido ya cerrado
         if pedido.cerrado: 
             raise ValueError("No se puede cancelar un pedido ya finalizado")
-        
+
         # Devolver el stock de todos los productos
         for detalle in pedido.detalles:
             producto = db.session.get(Producto, detalle.producto_id)
@@ -220,11 +256,11 @@ def cancelar(pedido_id, id_usuario):
                 # Mostrar el producto si vuelve a tener stock
                 if producto.stock > 0:
                     producto.mostrar = True
-        
+
         # Eliminar el pedido
         db.session.delete(pedido)
         db.session.commit()
-        
+
     except ValueError as e:
         db.session.rollback()
         raise
@@ -232,7 +268,7 @@ def cancelar(pedido_id, id_usuario):
         db.session.rollback()
         raise ValueError("Error al cancelar el pedido: " + str(e))
 
-# DELETE - Eliminar pedido (devuelve stock automáticamente)
+# DELETE - Eliminar pedido
 def eliminar(pedido_id):
     try:
         pedido = db.session.get(Pedido, pedido_id)

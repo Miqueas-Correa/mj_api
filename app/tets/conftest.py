@@ -3,9 +3,10 @@ from app.app import create_app
 from app.extensions import db
 from app.model.usuarios_model import Usuario
 from app.model.productos_model import Producto
-from app.model.pedidos_model import Pedido, PedidoDetalle
 from app.model.dto.UsuariosDTO import validar_telefono_ar
 from werkzeug.security import generate_password_hash
+from PIL import Image
+from pathlib import Path
 
 class TestingConfig:
     TESTING = True
@@ -66,9 +67,19 @@ def sample_product(app_context):
 
 @pytest.fixture
 def sample_pedido(app_context, sample_user, sample_product):
-    pedido = Pedido(id_usuario=sample_user.id, total=sample_product.precio)
-    detalle = PedidoDetalle(producto_id=sample_product.id, cantidad=1)
+    from app.model.pedidos_model import Pedido, PedidoDetalle
+    from app.extensions import db
+    
+    pedido = Pedido(
+        id_usuario=sample_user.id,
+        total=sample_product.precio
+    )
+    detalle = PedidoDetalle(
+        producto_id=sample_product.id,
+        cantidad=1
+    )
     pedido.detalles.append(detalle)
+
     db.session.add(pedido)
     db.session.commit()
     return pedido
@@ -84,3 +95,27 @@ def disable_jwt_blacklist(app, monkeypatch):
         "_token_in_blocklist_callback",
         lambda *_: False
     )
+
+@pytest.fixture
+def test_image_file(app):
+    from pathlib import Path
+
+    current = Path(__file__).resolve().parent
+
+    # Subir hasta llegar al directorio que contiene 'app'
+    while current.name != 'mj_api' and current.parent != current:
+        current = current.parent
+
+    # Ahora current debería ser la raíz del proyecto (mj_api)
+    upload_path = current / 'static' / 'uploads' / 'productos'
+    upload_path.mkdir(parents=True, exist_ok=True)
+
+    filepath = upload_path / 'test_static.jpg'
+    img = Image.new('RGB', (50, 50), color='blue')
+    img.save(str(filepath), 'JPEG')
+
+    yield 'test_static.jpg'
+
+    # Cleanup
+    if filepath.exists():
+        filepath.unlink()

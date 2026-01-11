@@ -1,34 +1,18 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
-
 """
-Módulos de modelos DTO (Data Transfer Objects) para pedidos.
-Contiene definiciones de modelos Pydantic usados para representar y validar
-los datos relacionados con pedidos. Estas clases se utilizan para la validación
-de entrada en la API y para facilitar la serialización/deserialización de datos
-entre capas de la aplicación.
-Clases principales:
-- PedidoDetalleDTO: Representa una línea de detalle de un pedido (producto y cantidad).
-- PedidoUpdateDTO: Representa los campos editables de un pedido para operaciones de actualización.
-"""
-"""DTO para el detalle de un pedido.
+DTOs para la gestión de pedidos.
+Clases:
+    PedidoDetalleDTO: Representa el detalle de un producto dentro de un pedido, incluyendo el ID del producto y la cantidad solicitada.
+    PedidoUpdateDTO: Utilizado para actualizar un pedido existente, permitiendo modificar el usuario asociado, el estado de cerrado y la lista de detalles del pedido.
 Atributos:
-- producto_id (int): Identificador del producto.
-- cantidad (int): Cantidad solicitada del producto. Debe ser un entero mayor que 0
-    (validado con Field(..., gt=0)).
-Uso:
-- Representa una línea de pedido en operaciones de creación o actualización de pedidos.
-"""
-"""DTO para actualización parcial de un pedido.
-Todos los campos son opcionales para permitir actualizaciones parciales.
-Atributos:
-- id_usuario (Optional[int]): Identificador del usuario asociado al pedido.
-- cerrado (Optional[bool]): Indicador de si el pedido está cerrado/completado.
-- detalles (Optional[List[PedidoDetalleDTO]]): Lista de detalles (líneas) del pedido.
-    Si se proporciona, cada elemento debe cumplir la validación definida en PedidoDetalleDTO.
-Notas:
-- Este DTO está pensado para endpoints de actualización (PATCH/PUT) donde no siempre
-    se envían todos los campos del pedido. La validación previa evita estados inválidos.
+    PedidoDetalleDTO:
+        producto_id (int): Identificador único del producto. Debe ser mayor o igual a 1.
+        cantidad (int): Cantidad del producto solicitada. Debe ser mayor que 0.
+    PedidoUpdateDTO:
+        id_usuario (Optional[int]): Identificador del usuario asociado al pedido. Opcional y debe ser mayor o igual a 1 si se proporciona.
+        cerrado (Optional[bool]): Indica si el pedido está cerrado. Opcional.
+        detalles (Optional[List[PedidoDetalleDTO]]): Lista de detalles del pedido. Opcional.
 """
 
 class PedidoDetalleDTO(BaseModel):

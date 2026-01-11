@@ -1,31 +1,8 @@
 import pytest
 from app.model.pedidos_model import Pedido
 from app.extensions import db
-from app.service.pedidos_service import listar, crear, editar, eliminar, obtener
-
-# ------------------------
-# Tests listar()
-# ------------------------
-
-def test_listar_todos(app_context, sample_pedido):
-    res = listar(None)
-    assert len(res) == 1
-    assert res[0]["id_usuario"] == sample_pedido.id_usuario
-
-def test_listar_cerrado_true_false(app_context, sample_pedido):
-    sample_pedido.cerrado = True
-    db.session.commit()
-
-    res_true = listar("true")
-    assert len(res_true) == 1
-    assert res_true[0]["cerrado"] is True
-
-    with pytest.raises(ValueError, match="Error al listar pedidos: No se encontraron pedidos"):
-        listar("false")
-
-def test_listar_parametro_invalido(app_context):
-    with pytest.raises(ValueError, match="Error al listar pedidos: Error en el parámetro 'cerrado'"):
-        listar("otro")
+from app.service.pedidos_service import crear, editar, eliminar, obtener
+from app.tets.conftest import sample_product
 
 # ------------------------
 # Tests obtener()
@@ -44,11 +21,11 @@ def test_obtener_por_producto(app_context, sample_product, sample_pedido):
     assert res[0]["detalles"][0]["producto_id"] == sample_product.id
 
 def test_obtener_no_existe(app_context):
-    with pytest.raises(ValueError, match="Error al obtener pedidos: Pedido 999 no encontrado"):
+    with pytest.raises(ValueError, match="Pedido 999 no encontrado"):
         obtener(1, 999, None)
 
 def test_obtener_by_invalido(app_context):
-    with pytest.raises(ValueError, match="Error al obtener pedidos: Error en el parámetro 'by'"):
+    with pytest.raises(ValueError, match="Error en el parámetro 'by'"):
         obtener(3, 1, None)
 
 # ------------------------
@@ -79,7 +56,7 @@ def test_crear_producto_invalido(app_context, sample_user):
         "productos": [{"producto_id": 999, "cantidad": 1}]
     }
 
-    with pytest.raises(ValueError, match="Error al crear pedido: Producto 999 no encontrado"):
+    with pytest.raises(ValueError, match="Producto 999 no encontrado"):
         crear(data)
 
 # ------------------------
@@ -101,6 +78,13 @@ def test_editar_detalles(app_context, sample_pedido, sample_product):
     assert pedido.total == sample_product.precio * 3
     assert pedido.detalles[0].cantidad == 3
 
+def test_editar_pedido_cerrado_no_permitido(app_context, sample_pedido, sample_product):
+    sample_pedido.cerrado = True
+    db.session.commit()
+
+    with pytest.raises(ValueError, match="No se puede modificar un pedido cerrado"):
+        editar(sample_pedido.id, {"detalles": [{"producto_id": sample_product.id, "cantidad": 5}]})
+
 def test_editar_pedido_no_encontrado(app_context):
     with pytest.raises(ValueError, match="Pedido no encontrado"):
         editar(999, {"cerrado": True})
@@ -116,5 +100,5 @@ def test_eliminar_ok(app_context, sample_pedido):
     assert pedido is None
 
 def test_eliminar_no_existe(app_context):
-    with pytest.raises(ValueError, match="Error al eliminar el pedido: Pedido no encontrado"):
+    with pytest.raises(ValueError, match="Pedido no encontrado"):
         eliminar(999)

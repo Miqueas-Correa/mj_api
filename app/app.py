@@ -9,32 +9,19 @@ from app.controller.auth_controller import auth_bp
 from app.controller.admin_controller import admin_bp
 from app.controller.static_controller import static_bp
 from app.security.jwt_callbacks import register_jwt_callbacks
-
 """
-Este módulo define la aplicación principal de Flask para el proyecto.
+Este módulo define la función principal para crear e inicializar una aplicación Flask con configuración flexible.
 Funciones:
-----------
-- _load_config(app, config_like):
-    Carga la configuración en la instancia de Flask `app` desde diferentes fuentes posibles:
-    - Un diccionario de configuración.
-    - Una clase o instancia de configuración.
-    - Un objeto con atributos de configuración.
-    Permite flexibilidad y tolerancia a errores en la carga de configuración.
-- create_app(config_class=None):
-    Crea y configura una instancia de la aplicación Flask.
-    Parámetros:
-        config_class: Puede ser una clase, instancia, diccionario de configuración o None.
-    Inicializa:
-        - Configuración de la app.
-        - CORS con orígenes definidos en la configuración.
-        - Extensiones JWT y base de datos.
-        - Blueprints para usuarios, pedidos, productos y autenticación (si existen).
-    Devuelve:
-        Instancia de Flask configurada.
-Uso:
-----
-Si el archivo se ejecuta directamente, crea la app usando la clase Config y la ejecuta en modo debug si está configurado.
+- _load_config(app, config_like): Carga la configuración en la app Flask desde un diccionario, clase, instancia o cualquier objeto compatible. Intenta varias estrategias para asegurar la correcta carga de la configuración.
+- create_app(config_class=None): Crea y configura una instancia de Flask. Permite pasar la configuración como clase, instancia, diccionario o None. Inicializa extensiones (DB, JWT, CORS) y registra blueprints de controladores si están disponibles.
+- Bloque principal: Si el archivo se ejecuta directamente, crea la app usando la clase Config y la ejecuta con el valor de DEBUG definido en la configuración.
+Características destacadas:
+- Soporte flexible para cargar configuración.
+- Inicialización de CORS con orígenes configurables y soporte para credenciales.
+- Registro tolerante de blueprints, útil para pruebas parciales.
+- Inicialización de extensiones comunes (base de datos, JWT).
 """
+
 def _load_config(app, config_like):
     if config_like is None:
         return

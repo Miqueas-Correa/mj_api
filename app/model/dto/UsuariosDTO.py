@@ -46,8 +46,6 @@ class UsuarioEntradaDTO(BaseModel):
     email: EmailStr
     telefono: str
     contrasenia: Annotated[str, Field(min_length=6, max_length=100)]
-    # activo: bool = True
-    # rol: Annotated[str, Field(pattern="^(cliente|admin)$")]
 
     @field_validator("telefono")
     def validar_telefono(cls, v):

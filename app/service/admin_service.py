@@ -6,6 +6,29 @@ from app.model.pedidos_model import Pedido, PedidoDetalle
 from app.model.productos_model import Producto
 from app.extensions import db
 from app.model.usuarios_model import Usuario
+"""
+    
+Servicio de administración para la gestión de productos, usuarios y pedidos.
+Funciones:
+----------
+- listar_productos(L_mostrar): Lista productos, filtrando por el campo 'mostrar' si se especifica.
+- obtener_productos(by, valor, L_mostrar): Busca productos por ID, nombre o categoría, con opción de filtrar por 'mostrar'.
+- featured(L_mostrar): Lista todos los productos destacados, con opción de filtrar por 'mostrar'.
+- crear_producto(request): Crea un nuevo producto a partir de los datos proporcionados.
+- editar_producto(valor, request): Edita los datos de un producto existente identificado por su ID.
+- eliminar_producto(valor): Elimina un producto por su ID.
+- listar_usuarios(L_activos): Lista usuarios, filtrando por el campo 'activo' si se especifica.
+- obtener_usuario(id): Obtiene los datos de un usuario por su ID.
+- editar_usuario(user_id, request): Edita los datos de un usuario existente identificado por su ID.
+- eliminar_usuario(valor, by_id): Da de baja (activo=False) a un usuario por ID o nombre.
+- listar_pedidos(L_cerrado): Lista pedidos, filtrando por el campo 'cerrado' si se especifica.
+- obtener_pedido(by, valor, L_cerrado): Busca pedidos por ID de pedido, ID de usuario o por producto en los detalles, con opción de filtrar por 'cerrado'.
+- editar_pedido(pedido_id, request): Edita los datos de un pedido existente identificado por su ID.
+- eliminar_pedido(pedido_id): Elimina un pedido por su ID.
+Excepciones:
+-------------
+Las funciones pueden lanzar ValueError o RuntimeError en caso de errores de validación, integridad de datos o problemas inesperados en la base de datos.
+"""
 
 """
     PRODUCTOS
@@ -118,9 +141,16 @@ def editar_producto(valor, request):
             if clave not in campos_validos: raise ValueError(f"El atributo '{clave}' no existe en Producto.")
 
         dto = ProductoUpdateDTO(**request)
-        if not any([dto.nombre, dto.precio, dto.stock, dto.categoria,
-                    dto.descripcion, dto.imagen_url, dto.mostrar]):
-            raise ValueError("No se proporcionaron datos para actualizar")
+        if not any([
+            dto.nombre is not None,
+            dto.precio is not None,
+            dto.stock is not None,
+            dto.categoria is not None,
+            dto.descripcion is not None,
+            dto.imagen_url is not None,
+            dto.mostrar is not None,
+            dto.destacado is not None
+        ]): raise ValueError("No se proporcionaron datos para actualizar")
 
         modificado = False
 

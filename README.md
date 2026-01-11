@@ -172,7 +172,7 @@ cd mj_api
 2️⃣ Crear entorno virtual
 python -m venv venv
 source venv/bin/activate  # Linux / Mac
-venv\Scripts\activate     # Windows
+.venv\Scripts\activate     # Windows
 
 3️⃣ Instalar dependencias
 pip install -r requirements.txt
@@ -195,7 +195,7 @@ DEBUG=False
 JWT_SECRET_KEY=your_jwt_secret_key
 
 - CORS
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,,https://mj-store-nine.vercel.app
 
 - Backend
 BACKEND_URL=http://localhost:5000
@@ -212,7 +212,8 @@ http://localhost:5000
 
 Tests unitarios incluidos
 
-Endpoints testeados con Postman
+Endpoints testeados con Postman:
+https://www.postman.com/aviation-pilot-83226219/miki/collection/30572429-6813db88-765c-4f3f-bf00-399e4b03de52/?action=share&creator=30572429
 
 Colección Postman incluida como parte de la documentación
 

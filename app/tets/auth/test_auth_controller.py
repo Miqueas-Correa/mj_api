@@ -1,17 +1,11 @@
 from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
-from app.extensions import db
-from app.model.token_blacklist import TokenBlacklist
 from app.service.usuarios_service import logout_token
 
 def test_login_ok(client, sample_user, monkeypatch):
     def mock_check_password(email, contrasenia):
         return {
             "token": "fake-access",
-            "usuario": {
-                "id": sample_user.id,
-                "nombre": sample_user.nombre,
-                "email": sample_user.email
-            }
+            "refresh": "fake-refresh"
         }
 
     monkeypatch.setattr(
@@ -26,8 +20,8 @@ def test_login_ok(client, sample_user, monkeypatch):
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["token"] == "fake-access"
-    assert data["usuario"]["email"] == sample_user.email
+    assert "token" in data
+    assert "refresh" in data
 
 def test_login_missing_fields(client):
     response = client.post("/auth/login", json={"email": "x@test.com"})

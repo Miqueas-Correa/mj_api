@@ -1,12 +1,11 @@
 from flask import jsonify
-from flask_jwt_extended import get_jwt, jwt_required
+from flask_jwt_extended import get_jwt
 from functools import wraps
-
 """
-Este módulo proporciona middlewares de autenticación para rutas protegidas en una aplicación Flask utilizando JWT.
+Este módulo proporciona un decorador para restringir el acceso a rutas solo a usuarios con rol de administrador.
 Funciones:
-    require_admin(fn): Decorador que restringe el acceso a la ruta solo a usuarios con el rol de administrador. 
-                      Si el usuario no es administrador, retorna un mensaje de error y un código de estado 403.
+    require_admin(fn): Decorador que verifica si el usuario autenticado tiene el rol de 'admin' en sus claims JWT.
+    Si no es administrador, retorna un mensaje de error y un código de estado 403.
 """
 
 def require_admin(fn):

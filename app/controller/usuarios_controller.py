@@ -3,27 +3,27 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
 from app.service.pedidos_service import editar
 from app.service.usuarios_service import obtener
+"""
+Controlador de usuarios para la API.
+Rutas:
+    GET /usuarios/me:
+        Obtiene la información del usuario autenticado.
+        Requiere autenticación JWT.
+        Respuestas:
+            200: Información del usuario en formato JSON.
+            404: Usuario no encontrado.
+            500: Error interno del servidor.
+    PUT /usuarios/me:
+        Actualiza el perfil del usuario autenticado.
+        Requiere autenticación JWT.
+        Cuerpo de la solicitud: JSON con los datos a actualizar.
+        Respuestas:
+            200: Perfil actualizado exitosamente.
+            400: Error de validación o datos incorrectos.
+            500: Error interno del servidor.
+"""
 
 usuarios_bp = Blueprint("usuarios", __name__)
-
-"""
-Controlador de usuarios para la API de Flask.
-Este módulo define las rutas relacionadas con la gestión de usuarios, incluyendo operaciones de listado, obtención, edición y eliminación de usuarios. Utiliza middlewares para requerir autenticación y autorización de administrador en ciertas rutas.
-Rutas:
-- GET /usuarios: Lista todos los usuarios (requiere admin).
-- GET /usuarios/me: Obtiene la información del usuario autenticado.
-- GET /usuarios/<int:id>: Obtiene la información de un usuario por ID (requiere admin).
-- PUT /usuarios/<int:id>: Modifica los datos de un usuario por ID.
-- PUT /usuarios/me: Permite al usuario autenticado modificar su propio perfil.
-- DELETE /usuarios/<int:id>: Elimina (inhabilita) un usuario por ID.
-Manejo de errores:
-- Devuelve mensajes de error claros en caso de errores de validación, valores incorrectos o errores internos del servidor.
-Dependencias:
-- Flask: Para la gestión de rutas y solicitudes HTTP.
-- Pydantic: Para la validación de datos.
-- auth_middleware: Middlewares de autenticación y autorización.
-- usuarios_service: Lógica de negocio para operaciones sobre usuarios.
-"""
 
 @usuarios_bp.route("/usuarios/me", methods=["GET"])
 @jwt_required()

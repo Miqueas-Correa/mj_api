@@ -16,7 +16,6 @@ Métodos:
     __repr__(): Representación legible del objeto Usuario, mostrando id, nombre y rol.
 """
 
-# Definición del modelo de Usuario
 class Usuario(db.Model):
     __tablename__ = "usuarios"
 

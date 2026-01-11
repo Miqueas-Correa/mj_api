@@ -4,65 +4,16 @@ from app.model.token_blacklist import TokenBlacklist
 from app.model.dto.UsuariosDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
 from app.model.usuarios_model import Usuario
 from app.extensions import db
-
 """
-Módulo de servicios para la gestión de usuarios en la aplicación.
+Módulo de servicios para la gestión de usuarios.
 Funciones:
-----------
-listar(L_activos):
-    Lista los usuarios según su estado de actividad (activos/inactivos/todos).
-    Parámetros:
-        L_activos (str o None): 'true', 'false' o None para filtrar usuarios activos, inactivos o todos.
-    Retorna:
-        Lista de diccionarios con los datos de los usuarios.
-    Excepciones:
-        ValueError: Si el parámetro es inválido o no se encuentran usuarios.
-obtener(id):
-    Obtiene un usuario por su ID.
-    Parámetros:
-        id (int): ID del usuario.
-    Retorna:
-        Diccionario con los datos del usuario.
-    Excepciones:
-        ValueError: Si el usuario no existe.
-crear(request):
-    Crea un nuevo usuario a partir de los datos proporcionados.
-    Parámetros:
-        request (dict): Datos del usuario a crear.
-    Excepciones:
-        ValueError: Si hay errores de validación o datos duplicados.
-editar(id, request, by_id):
-    Edita los datos de un usuario existente.
-    Parámetros:
-        id (int o str): ID o nombre del usuario.
-        request (dict): Datos a actualizar.
-        by_id (bool): True si se busca por ID, False si por nombre.
-    Excepciones:
-        ValueError: Si hay errores de validación, datos duplicados o usuario no encontrado.
-check_password(email, contrasenia):
-    Verifica las credenciales de un usuario y genera tokens JWT si son correctas.
-    Parámetros:
-        email (str): Email del usuario.
-        contrasenia (str): Contraseña del usuario.
-    Retorna:
-        Diccionario con tokens y datos del usuario.
-    Excepciones:
-        ValueError: Si las credenciales son incorrectas o el usuario está inactivo.
-eliminar(valor, by_id):
-    Marca un usuario como inactivo (eliminación lógica).
-    Parámetros:
-        valor (int o str): ID o nombre del usuario.
-        by_id (bool): True si se busca por ID, False si por nombre.
-    Retorna:
-        Diccionario con mensaje de éxito.
-    Excepciones:
-        ValueError: Si el usuario no existe o ya está inactivo.
-logout_token(jti):
-    Revoca un token JWT añadiéndolo a la lista negra.
-    Parámetros:
-        jti (str): Identificador único del token JWT.
+- obtener(id): Busca y retorna un usuario por su ID. Lanza ValueError si no se encuentra.
+- check_password(email, contrasenia): Verifica las credenciales del usuario y retorna tokens JWT si son correctas. Lanza ValueError en caso de error de validación, usuario inactivo/no encontrado o contraseña incorrecta.
+- logout_token(jti): Revoca un token JWT añadiendo su JTI a la lista negra.
+- crear(request): Crea un nuevo usuario a partir de los datos recibidos en el request. Valida unicidad de email, teléfono y nombre de usuario, y que se acepte el uso de datos. Lanza ValueError en caso de error de validación o si ya existen los datos.
+Excepciones:
+- ValueError: Se lanza en caso de errores de validación, datos duplicados o problemas al interactuar con la base de datos.
 """
-
 
 # buscar usuario por id o por nombre
 def obtener(id):

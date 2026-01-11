@@ -1,64 +1,32 @@
 from app.model.dto.ProductosDTO import ProductoSalidaDTO
 from app.model.productos_model import Producto
 from app.extensions import db
-
 """
-Módulo de servicios para la gestión de productos.
+Servicio para la gestión de productos.
 Funciones:
-    listar(L_mostrar):
-        Lista todos los productos, permitiendo filtrar por el atributo 'mostrar'.
-        Parámetros:
-            L_mostrar (str | None): Si es 'true', muestra solo productos activos; si es 'false', solo inactivos; si es None, muestra todos.
-        Retorna:
-            Lista de diccionarios con los datos de los productos.
-        Excepciones:
-            ValueError: Si el parámetro 'mostrar' es inválido o ocurre un error al listar.
-    obtener(by, valor, L_mostrar):
-        Busca productos por ID, nombre o categoría, con opción de filtrar por 'mostrar'.
-        Parámetros:
-            by (int): 0 para buscar por nombre, 1 por ID, 2 por categoría.
-            valor (str | int): Valor a buscar.
-            L_mostrar (str | None): Filtro por el atributo 'mostrar'.
-        Retorna:
-            Lista de diccionarios con los datos de los productos encontrados.
-        Excepciones:
-            ValueError: Si los parámetros son inválidos o no se encuentran productos.
-    categorias_list():
-        Obtiene la lista de categorías distintas de los productos.
-        Retorna:
-            Lista de nombres de categorías.
-        Excepciones:
-            ValueError: Si ocurre un error al listar las categorías.
-    featured(L_mostrar):
-        Lista todos los productos destacados, con opción de filtrar por 'mostrar'.
-        Parámetros:
-            L_mostrar (str | None): Filtro por el atributo 'mostrar'.
-        Retorna:
-            Lista de diccionarios con los datos de los productos destacados.
-        Excepciones:
-            ValueError: Si el parámetro es inválido o ocurre un error al listar.
-    crear(request):
-        Crea un nuevo producto a partir de los datos recibidos.
-        Parámetros:
-            request (dict): Datos del producto a crear.
-        Excepciones:
-            ValueError: Si los datos son inválidos o ya existe un producto con ese nombre.
-            RuntimeError: Si ocurre un error inesperado al crear el producto.
-    editar(valor, request):
-        Modifica los datos de un producto existente.
-        Parámetros:
-            valor (int): ID del producto a modificar.
-            request (dict): Datos a actualizar.
-        Excepciones:
-            ValueError: Si los datos son inválidos, el producto no existe o no se pudo modificar.
-    eliminar(valor):
-        Elimina un producto por su ID.
-        Parámetros:
-            valor (int): ID del producto a eliminar.
-        Retorna:
-            dict: Mensaje de éxito.
-        Excepciones:
-            ValueError: Si el producto no existe o ocurre un error al eliminar.
+-----------
+listar():
+    Obtiene una lista de todos los productos visibles (mostrar=True).
+    Devuelve una lista de diccionarios con los datos de cada producto.
+obtener(by, valor):
+    Busca productos según el criterio especificado:
+        - by=0: Busca productos cuyo nombre contenga el valor dado (case-insensitive).
+        - by=1: Busca producto por ID (devuelve aunque esté oculto).
+        - by=2: Busca productos por categoría (case-insensitive).
+    Devuelve una lista de diccionarios con los datos de los productos encontrados.
+    Lanza ValueError si no se encuentran productos o si el parámetro 'by' es inválido.
+categorias_list():
+    Obtiene una lista de todas las categorías distintas de los productos.
+    Devuelve una lista de strings con los nombres de las categorías.
+featured():
+    Lista todos los productos destacados (destacado=True y mostrar=True).
+    Devuelve una lista de diccionarios con los datos de los productos destacados.
+actualizar_stock(producto_id, cantidad):
+    Actualiza el stock de un producto identificado por su ID.
+    Si el stock es menor o igual a 0, el producto se oculta (mostrar=False).
+    Si el stock es mayor a 0, el producto se muestra (mostrar=True).
+    Devuelve un diccionario con los datos actualizados del producto.
+    Lanza ValueError si el producto no existe o si ocurre un error al actualizar.
 """
 
 # PARA EL METODO GET
@@ -125,31 +93,23 @@ def featured():
 
 # Actualizar stock de un producto
 def actualizar_stock(producto_id, cantidad):
-    """
-    Actualiza el stock de un producto sin restricciones de admin.
-    Útil para operaciones internas del sistema.
-    
-    Parámetros:
-        producto_id (int): ID del producto
-        cantidad (int): Nueva cantidad de stock
-    """
     try:
         producto = db.session.get(Producto, producto_id)
         if not producto:
             raise ValueError(f"Producto {producto_id} no encontrado")
-        
+
         producto.stock = cantidad
-        
+
         # Ocultar/mostrar según stock
         if cantidad <= 0:
             producto.mostrar = False
         else:
             producto.mostrar = True
-        
+
         db.session.commit()
-        
+
         return ProductoSalidaDTO.from_model(producto).__dict__
-        
+
     except Exception as e:
         db.session.rollback()
         raise ValueError("Error al actualizar stock: " + str(e))

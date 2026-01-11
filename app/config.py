@@ -1,29 +1,27 @@
-# configuracion (desarrollo, produccion, testing)
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
 # Cargar las variables de .env
 load_dotenv()
-
 """
 Módulo de configuración para la aplicación Flask.
-Este módulo define clases de configuración para diferentes entornos (desarrollo, producción, testing).
-Carga variables de entorno desde un archivo .env utilizando dotenv.
 Clases:
     Config:
-        Configuración base para la aplicación.
-        - Configuración de la base de datos (MySQL por defecto).
-        - Configuración de CORS (orígenes permitidos, soporte de credenciales).
-        - Configuración de JWT (clave secreta, expiración de tokens, ubicación, blacklist).
-        - URI para SQLAlchemy.
-        - Configuraciones generales de Flask (entorno, debug).
+        Configuración base para la aplicación, incluyendo:
+            - Parámetros de conexión a la base de datos (MySQL).
+            - Configuración de CORS.
+            - URL del backend y tamaño máximo de contenido.
+            - Configuración de JWT (clave secreta, expiración de tokens, ubicación y tipo de encabezado, blacklist).
+            - URI de SQLAlchemy y opciones de seguimiento.
+            - Configuración del entorno y modo debug.
     TestingConfig(Config):
-        Configuración específica para pruebas.
-        - Usa una base de datos SQLite en memoria.
-        - Activa el modo testing.
-        - Desactiva debug.
-        - Permite cualquier origen en CORS.
+        Configuración específica para pruebas:
+            - Activa el modo de testing.
+            - Utiliza una base de datos SQLite en memoria.
+            - Desactiva el modo debug.
+            - Permite cualquier origen en CORS.
 """
+
 class Config:
     # Configuración de la DB
     DB_HOST = os.getenv("DB_HOST", "localhost")

@@ -17,7 +17,6 @@ Métodos:
     __repr__(): Representación legible del objeto Producto.
 """
 
-# Definición del modelo de productos
 class Producto(db.Model):
     __tablename__ = "productos"
 

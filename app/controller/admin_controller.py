@@ -10,6 +10,29 @@ from app.service.admin_service import (
     obtener_usuario
 )
 import os
+"""
+
+Controlador de rutas administrativas para la gestión de productos, usuarios y pedidos en la API.
+Incluye:
+- Subida y eliminación de imágenes de productos con validaciones de tipo, tamaño y dimensiones.
+- CRUD completo para productos: listar, buscar (por nombre, id, categoría), crear, modificar y eliminar.
+- CRUD para usuarios: listar, obtener por id, modificar (rol y estado), y eliminar (cambio de estado a inactivo).
+- CRUD para pedidos: listar, buscar (por usuario, id, código de producto), modificar y eliminar.
+Todas las rutas están protegidas por autenticación JWT y requieren permisos de administrador.
+Funciones principales:
+- allowed_file(filename): Verifica si la extensión del archivo es permitida.
+- validate_image(file_stream): Valida que el archivo sea una imagen válida.
+- resize_image_if_needed(filepath, max_dimension): Redimensiona la imagen si excede el tamaño máximo permitido.
+- get_base_url(): Obtiene la URL base del backend para construir rutas absolutas.
+- upload_image_endpoint(): Sube una imagen de producto con validaciones y devuelve la URL.
+- delete_image_endpoint(): Elimina una imagen de producto del servidor.
+- get_productos(), get_producto_by_name(), get_producto_by_id(), get_producto_by_category(): Listan y buscan productos.
+- post_producto(), put_producto(), delete_producto(): Crean, modifican y eliminan productos.
+- get_usuarios(), get_usuario_by_id(), put_usuario(), delete_usuario(): Listan, obtienen, modifican y eliminan usuarios.
+- get_pedidos(), get_pedido_by_usuario(), get_pedido_by_id(), get_pedido_by_producto(): Listan y buscan pedidos.
+- put_pedido(), delete_pedido(): Modifican y eliminan pedidos.
+Todas las respuestas son en formato JSON y manejan errores comunes como validación, formato y errores internos del servidor.
+"""
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 

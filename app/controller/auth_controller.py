@@ -8,6 +8,32 @@ from flask_jwt_extended import (
 )
 from pydantic import ValidationError
 from app.service.usuarios_service import check_password, crear, logout_token, obtener
+"""
+Controlador de autenticación para la API.
+Rutas:
+    /auth/login (POST): Inicia sesión de usuario. Requiere email y contraseña en formato JSON.
+        - Respuestas:
+            200: Retorna tokens de acceso y refresh.
+            400: Error de validación o credenciales incorrectas.
+            500: Error interno del servidor.
+    /auth/register (POST): Registra un nuevo usuario. Requiere datos de usuario en formato JSON.
+        - Respuestas:
+            201: Usuario creado exitosamente.
+            400: Error de validación o datos incorrectos.
+            500: Error interno del servidor.
+    /auth/logout (POST): Cierra la sesión del usuario autenticado. Requiere JWT válido.
+        - Respuestas:
+            200: Logout exitoso.
+    /auth/refresh (POST): Refresca el token de acceso usando un refresh token válido.
+        - Respuestas:
+            200: Retorna nuevos tokens de acceso y refresh.
+            500: Error interno del servidor.
+Dependencias:
+    - Flask
+    - Flask-JWT-Extended
+    - Pydantic
+    - Servicios de usuario personalizados (check_password, crear, logout_token, obtener)
+"""
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
