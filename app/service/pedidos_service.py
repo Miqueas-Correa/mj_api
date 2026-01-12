@@ -1,5 +1,5 @@
 from pydantic import ValidationError
-from app.model.dto.PedidosDTO import PedidoUpdateDTO
+from app.model.dto.Pedidos_dto import PedidoUpdateDTO
 from app.model.pedidos_model import Pedido, PedidoDetalle
 from app.model.productos_model import Producto
 from app.extensions import db

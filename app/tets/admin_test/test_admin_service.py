@@ -1,7 +1,7 @@
 import pytest
 from app.model.productos_model import db, Producto
 from app.model.usuarios_model import Usuario
-from app.model.pedidos_model import Pedido, PedidoDetalle
+from app.model.pedidos_model import Pedido
 from app.service.admin_service import (
     listar_productos, obtener_productos, crear_producto, editar_producto, eliminar_producto,
     listar_usuarios, obtener_usuario, editar_usuario, eliminar_usuario,

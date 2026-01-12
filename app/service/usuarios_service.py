@@ -1,7 +1,7 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 from pydantic import ValidationError
 from app.model.token_blacklist import TokenBlacklist
-from app.model.dto.UsuariosDTO import UsuarioEntradaDTO, UsuarioSalidaDTO
+from app.model.dto.Usuarios_dto import UsuarioEntradaDTO, UsuarioSalidaDTO
 from app.model.usuarios_model import Usuario
 from app.extensions import db
 """

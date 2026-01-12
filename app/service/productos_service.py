@@ -1,4 +1,4 @@
-from app.model.dto.ProductosDTO import ProductoSalidaDTO
+from app.model.dto.Productos_dto import ProductoSalidaDTO
 from app.model.productos_model import Producto
 from app.extensions import db
 """

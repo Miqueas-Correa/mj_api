@@ -3,7 +3,7 @@ from app.app import create_app
 from app.extensions import db
 from app.model.usuarios_model import Usuario
 from app.model.productos_model import Producto
-from app.model.dto.UsuariosDTO import validar_telefono_ar
+from app.model.dto.Usuarios_dto import validar_telefono_ar
 from werkzeug.security import generate_password_hash
 from PIL import Image
 from pathlib import Path

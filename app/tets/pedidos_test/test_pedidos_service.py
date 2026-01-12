@@ -2,7 +2,6 @@ import pytest
 from app.model.pedidos_model import Pedido
 from app.extensions import db
 from app.service.pedidos_service import crear, editar, eliminar, obtener
-from app.tets.conftest import sample_product
 
 # ------------------------
 # Tests obtener()
