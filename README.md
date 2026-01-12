@@ -198,7 +198,7 @@ JWT_SECRET_KEY=your_jwt_secret_key
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,,https://mj-store-nine.vercel.app
 
 - Backend
-BACKEND_URL=http://localhost:5000
+BACKEND_URL=https://mj-api-8cus.onrender.com
 
 ## Ejecutar la API
 python -m app.app
