@@ -117,5 +117,7 @@ def create_app(config_class=None):
 
 if __name__ == "__main__":
     # cuando se ejecuta directamente, cargar Config real si existe
+    import os
     app = create_app(Config)
-    app.run(debug=app.config.get("DEBUG", False))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
