@@ -200,6 +200,9 @@ BACKEND_URL=https://mj-api-8cus.onrender.com
 ## Ejecutar la API
 python -m app.app
 
+En produccion:
+gunicorn wsgi:app --bind 0.0.0.0:$PORT
+
 
 Servidor disponible en:
 
