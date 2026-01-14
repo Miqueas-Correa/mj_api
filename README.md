@@ -56,6 +56,7 @@ Código limpio y testeable
 - │
 - │   ├── controllers/
 - │   │   ├── auth_controller.py
+- │   │   ├── admin_controller.py
 - │   │   ├── usuarios_controller.py
 - │   │   ├── productos_controller.py
 - │   │   └── pedidos_controller.py
@@ -66,13 +67,9 @@ Código limpio y testeable
 - │   │   ├── pedido.py
 - │   │   └── token_blacklist.py
 - │
-- │   ├── schemas/
-- │   │   ├── usuario_schema.py
-- │   │   ├── producto_schema.py
-- │   │   └── pedido_schema.py
-- │
 - │   ├── services/
 - │   │   ├── usuarios_service.py
+- │   │   ├── admin_service.py
 - │   │   ├── productos_service.py
 - │   │   └── pedidos_service.py
 - │
