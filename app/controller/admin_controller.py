@@ -1,5 +1,4 @@
-from PIL import Image
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from pydantic import ValidationError
 from app.controller.auth_middleware import require_admin
@@ -9,29 +8,17 @@ from app.service.admin_service import (
     listar_productos, listar_usuarios, obtener_pedido, obtener_productos,
     obtener_usuario
 )
-import os
-"""
+from app.service.cloudinary_service import upload_image, delete_image
 
+"""
 Controlador de rutas administrativas para la gestión de productos, usuarios y pedidos en la API.
 Incluye:
-- Subida y eliminación de imágenes de productos con validaciones de tipo, tamaño y dimensiones.
+- Subida y eliminación de imágenes de productos en Cloudinary.
 - CRUD completo para productos: listar, buscar (por nombre, id, categoría), crear, modificar y eliminar.
 - CRUD para usuarios: listar, obtener por id, modificar (rol y estado), y eliminar (cambio de estado a inactivo).
 - CRUD para pedidos: listar, buscar (por usuario, id, código de producto), modificar y eliminar.
+
 Todas las rutas están protegidas por autenticación JWT y requieren permisos de administrador.
-Funciones principales:
-- allowed_file(filename): Verifica si la extensión del archivo es permitida.
-- validate_image(file_stream): Valida que el archivo sea una imagen válida.
-- resize_image_if_needed(filepath, max_dimension): Redimensiona la imagen si excede el tamaño máximo permitido.
-- get_base_url(): Obtiene la URL base del backend para construir rutas absolutas.
-- upload_image_endpoint(): Sube una imagen de producto con validaciones y devuelve la URL.
-- delete_image_endpoint(): Elimina una imagen de producto del servidor.
-- get_productos(), get_producto_by_name(), get_producto_by_id(), get_producto_by_category(): Listan y buscan productos.
-- post_producto(), put_producto(), delete_producto(): Crean, modifican y eliminan productos.
-- get_usuarios(), get_usuario_by_id(), put_usuario(), delete_usuario(): Listan, obtienen, modifican y eliminan usuarios.
-- get_pedidos(), get_pedido_by_usuario(), get_pedido_by_id(), get_pedido_by_producto(): Listan y buscan pedidos.
-- put_pedido(), delete_pedido(): Modifican y eliminan pedidos.
-Todas las respuestas son en formato JSON y manejan errores comunes como validación, formato y errores internos del servidor.
 """
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -40,58 +27,15 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
     PRODUCTOS
 """
 
-# ✅ Configuración de subida de archivos
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads', 'productos')
+# Configuración
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-MAX_IMAGE_DIMENSION = 2000  # píxeles
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def validate_image(file_stream):
-    try:
-        img = Image.open(file_stream)
-        img.verify()  # Verifica que sea una imagen válida
-        file_stream.seek(0)  # Resetear el puntero del archivo
-        return True
-    except Exception:
-        return False
-
-def resize_image_if_needed(filepath, max_dimension=MAX_IMAGE_DIMENSION):
-    try:
-        with Image.open(filepath) as img:
-            # Convertir RGBA a RGB si es necesario
-            if img.mode in ('RGBA', 'LA', 'P'):
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                if img.mode == 'P':
-                    img = img.convert('RGBA')
-                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                img = background
-
-            # Redimensionar si es necesario
-            if img.width > max_dimension or img.height > max_dimension:
-                img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
-                img.save(filepath, optimize=True, quality=85)
-    except Exception as e:
-        print(f"⚠️ Error redimensionando imagen: {str(e)}")
-
-def get_base_url():
-    # Intenta obtener de la configuración
-    base_url = current_app.config.get('BACKEND_URL')
-
-    if not base_url:
-        # Fallback: construir desde el request
-        if request.host.startswith('localhost') or request.host.startswith('127.0.0.1'):
-            base_url = f"{request.scheme}://{request.host}"
-        else:
-            # En producción, usar la URL configurada o construirla
-            base_url = f"{request.scheme}://{request.host}"
-
-    return base_url
-
-# Ruta para subir imágenes con todas las validaciones
-@admin_bp.route('/upload-image', methods=['POST'])  #✅ Probado en postman
+# Ruta para subir imágenes a Cloudinary
+@admin_bp.route('/upload-image', methods=['POST'])
 @jwt_required()
 @require_admin
 def upload_image_endpoint():
@@ -101,15 +45,14 @@ def upload_image_endpoint():
             return jsonify({'error': 'No se envió ningún archivo'}), 400
 
         file = request.files['image']
-        filename = request.form.get('filename')
 
         if file.filename == '':
             return jsonify({'error': 'No se seleccionó ningún archivo'}), 400
 
         # Validar tamaño del archivo
-        file.seek(0, os.SEEK_END)
+        file.seek(0, 2)  # Seek to end
         file_length = file.tell()
-        file.seek(0)
+        file.seek(0)  # Reset to beginning
 
         if file_length > MAX_FILE_SIZE:
             return jsonify({
@@ -122,70 +65,40 @@ def upload_image_endpoint():
                 'error': 'Tipo de archivo no permitido. Solo: ' + ', '.join(ALLOWED_EXTENSIONS)
             }), 400
 
-        # Validar que sea realmente una imagen
-        if not validate_image(file.stream):
-            return jsonify({'error': 'El archivo no es una imagen válida'}), 400
-
-        # Asegurar que la carpeta existe
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-        # Verificar si el archivo ya existe y generar uno nuevo si es necesario
-        base_filename = filename
-        counter = 1
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-
-        while os.path.exists(filepath):
-            name, ext = os.path.splitext(base_filename)
-            filename = f"{name}_{counter}{ext}"
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            counter += 1
-
-        # Guardar el archivo
-        file.save(filepath)
-
-        # Optimizar/redimensionar la imagen
-        resize_image_if_needed(filepath)
-
-        base_url = get_base_url()
-        image_url = f'{base_url}/uploads/productos/{filename}'
+        # Subir a Cloudinary
+        image_url = upload_image(file, folder="productos")
 
         return jsonify({'url': image_url}), 200
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': 'Error al subir la imagen', 'detalle': str(e)}), 500
 
-# Ruta para eliminar imágenes (opcional pero recomendado)
-@admin_bp.route('/delete-image', methods=['DELETE'])    #✅ Probado en postman
+# Ruta para eliminar imágenes de Cloudinary
+@admin_bp.route('/delete-image', methods=['DELETE'])
 @jwt_required()
 @require_admin
 def delete_image_endpoint():
     try:
-        filename = request.json.get('filename')
+        image_url = request.json.get('url')
 
-        if not filename:
-            return jsonify({'error': 'No se especificó el nombre del archivo'}), 400
+        if not image_url:
+            return jsonify({'error': 'No se especificó la URL de la imagen'}), 400
 
-        # Extraer solo el nombre del archivo de la URL completa si viene así
-        if 'uploads/productos/' in filename:
-            filename = filename.split('uploads/productos/')[-1]
-
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-
-        # Verificar que el archivo existe
-        if not os.path.exists(filepath):
-            return jsonify({'error': 'Imagen no encontrada'}), 404
-
-        # Verificar que está dentro de la carpeta permitida (seguridad)
-        if not os.path.abspath(filepath).startswith(os.path.abspath(UPLOAD_FOLDER)):
-            return jsonify({'error': 'Operación no permitida'}), 403
-
-        # Eliminar el archivo
-        os.remove(filepath)
-        return jsonify({'message': 'Imagen eliminada exitosamente'}), 200
+        # Eliminar de Cloudinary
+        success = delete_image(image_url)
+        
+        if success:
+            return jsonify({'message': 'Imagen eliminada exitosamente'}), 200
+        else:
+            return jsonify({'error': 'No se pudo eliminar la imagen'}), 400
+            
     except Exception as e:
         return jsonify({'error': 'Error al eliminar la imagen', 'detalle': str(e)}), 500
 
 # Listar Productos
-@admin_bp.route("/productos", methods=["GET"]) # ✅ Probado en postman
+@admin_bp.route("/productos", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_productos():
@@ -198,7 +111,7 @@ def get_productos():
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar producto por nombre
-@admin_bp.route("/productos/<string:nombre>", methods=["GET"]) #✅ Probado en postman
+@admin_bp.route("/productos/<string:nombre>", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_producto_by_name(nombre):
@@ -211,7 +124,7 @@ def get_producto_by_name(nombre):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar producto por id
-@admin_bp.route("/productos/<int:id>", methods=["GET"]) #✅ Probado en postman
+@admin_bp.route("/productos/<int:id>", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_producto_by_id(id):
@@ -224,7 +137,7 @@ def get_producto_by_id(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar producto por categoria
-@admin_bp.route("/productos/categoria/<string:categoria>", methods=["GET"]) #✅ Probado en postman
+@admin_bp.route("/productos/categoria/<string:categoria>", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_producto_by_category(categoria):
@@ -237,7 +150,7 @@ def get_producto_by_category(categoria):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Crear producto
-@admin_bp.route("/productos", methods=["POST"])     #✅ Probado en postman
+@admin_bp.route("/productos", methods=["POST"])
 @jwt_required()
 @require_admin
 def post_producto():
@@ -254,7 +167,7 @@ def post_producto():
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Modificar producto
-@admin_bp.route('/productos/<int:id>', methods=["PUT"]) # ✅ Probado en postman
+@admin_bp.route('/productos/<int:id>', methods=["PUT"])
 @jwt_required()
 @require_admin
 def put_producto(id):
@@ -271,7 +184,7 @@ def put_producto(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Eliminar producto por id
-@admin_bp.route('/productos/<int:id>', methods=["DELETE"])  #✅ Probado en postman
+@admin_bp.route('/productos/<int:id>', methods=["DELETE"])
 @jwt_required()
 @require_admin
 def delete_producto(id):
@@ -287,7 +200,7 @@ def delete_producto(id):
 """
 
 # Listar todos los usuarios
-@admin_bp.route("/usuarios", methods=["GET"])   # ✅ Probado en postman
+@admin_bp.route("/usuarios", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_usuarios():
@@ -299,7 +212,7 @@ def get_usuarios():
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-@admin_bp.route("/usuarios/<int:id>", methods=["GET"])  #✅ Probado en postman
+@admin_bp.route("/usuarios/<int:id>", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_usuario_by_id(id):
@@ -310,8 +223,8 @@ def get_usuario_by_id(id):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Modificar usuario, puede modificar todos los campos pero actualmente solo activo y rol
-@admin_bp.route('/usuarios/<int:id>', methods=["PUT"])  #✅ Probado en postman
+# Modificar usuario
+@admin_bp.route('/usuarios/<int:id>', methods=["PUT"])
 @jwt_required()
 @require_admin
 def put_usuario(id):
@@ -328,7 +241,7 @@ def put_usuario(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # Eliminar usuario (cambiar su estado a inactivo)
-@admin_bp.route('/usuarios/<int:id>', methods=["DELETE"])   #✅ Probado en postman
+@admin_bp.route('/usuarios/<int:id>', methods=["DELETE"])
 @jwt_required()
 @require_admin
 def delete_usuario(id):
@@ -344,7 +257,7 @@ def delete_usuario(id):
 """
 
 # Listar todos los pedidos
-@admin_bp.route("/pedidos", methods=["GET"])    # ✅ Probado en postman
+@admin_bp.route("/pedidos", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_pedidos():
@@ -357,7 +270,7 @@ def get_pedidos():
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar pedido por id usuario
-@admin_bp.route("/pedidos/usuario/<int:id>", methods=["GET"])   #✅ Probado en postman
+@admin_bp.route("/pedidos/usuario/<int:id>", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_pedido_by_usuario(id):
@@ -370,7 +283,7 @@ def get_pedido_by_usuario(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar pedido por id
-@admin_bp.route("/pedidos/<int:id>", methods=["GET"])   #✅ Probado en postman
+@admin_bp.route("/pedidos/<int:id>", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_pedido_by_id(id):
@@ -383,7 +296,7 @@ def get_pedido_by_id(id):
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
 # buscar pedido por codigo producto
-@admin_bp.route("/pedidos/producto/<int:codigo>", methods=["GET"])  #✅ Probado en postman
+@admin_bp.route("/pedidos/producto/<int:codigo>", methods=["GET"])
 @jwt_required()
 @require_admin
 def get_pedido_by_producto(codigo):
@@ -395,8 +308,8 @@ def get_pedido_by_producto(codigo):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Modificar pedido, actualmente no se usa pero queda para futuras mejoras, solo habre y cierra el pedido
-@admin_bp.route('/pedidos/<int:id>', methods=["PUT"])   # ✅ Probado en postman
+# Modificar pedido
+@admin_bp.route('/pedidos/<int:id>', methods=["PUT"])
 @jwt_required()
 @require_admin
 def put_pedido(id):
@@ -412,8 +325,8 @@ def put_pedido(id):
     except Exception as e:
         return jsonify({"error": "Error interno del servidor", "detalle": str(e)}), 500
 
-# Eliminar pedido por id, actualmente no se eliminan pedidos, solo queda la ruta para futuras mejoras
-@admin_bp.route('/pedidos/<int:id>', methods=["DELETE"])    #✅ Probado en postman
+# Eliminar pedido por id
+@admin_bp.route('/pedidos/<int:id>', methods=["DELETE"])
 @jwt_required()
 @require_admin
 def delete_pedido(id):

@@ -1,3 +1,4 @@
+import cloudinary
 from flask import Flask
 from app.config import Config
 from flask_cors import CORS
@@ -9,6 +10,7 @@ from app.controller.auth_controller import auth_bp
 from app.controller.admin_controller import admin_bp
 from app.controller.static_controller import static_bp
 from app.security.jwt_callbacks import register_jwt_callbacks
+from app.service.cloudinary_service import init_cloudinary
 """
 Este módulo define la función principal para crear e inicializar una aplicación Flask con configuración flexible.
 Funciones:
@@ -84,6 +86,10 @@ def create_app(config_class=None):
 
     # Inicializar JWT
     jwt.init_app(app)
+
+    # Inicializar Cloudinary
+    init_cloudinary(app)
+    print("Cloudinary:", cloudinary.config().cloud_name)
 
     register_jwt_callbacks(jwt)
 
