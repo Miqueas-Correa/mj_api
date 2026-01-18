@@ -24,6 +24,8 @@ dotenv
 
 Postman (testing de endpoints)
 
+Cloudinary
+
 ## Arquitectura del Proyecto
 
 La API está organizada siguiendo una arquitectura modular, separando responsabilidades:
@@ -161,6 +163,9 @@ GET /pedidos/{id}
 
 📌 Todos los endpoints protegidos requieren token JWT.
 
+Todos los endpoints:
+https://www.postman.com/aviation-pilot-83226219/workspace/miki/collection/30572429-6813db88-765c-4f3f-bf00-399e4b03de52?action=share&creator=30572429
+
 ## Instalación y Ejecución
 1️⃣ Clonar el repositorio
 git clone https://github.com/Miqueas-Correa/mj_api.git
@@ -192,21 +197,23 @@ DEBUG=False
 JWT_SECRET_KEY=your_jwt_secret_key
 
 - CORS
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,,https://mj-store-nine.vercel.app
+CORS_ORIGINS=
 
-- Backend
-BACKEND_URL=https://mj-api-8cus.onrender.com
+- Cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+**Frontend:**
+
+# Configurar variables de entorno
+VITE_API_BASE_URL=
 
 ## Ejecutar la API
 python -m app.app
 
 En produccion:
 gunicorn wsgi:app --bind 0.0.0.0:$PORT
-
-
-Servidor disponible en:
-
-http://localhost:5000
 
 ## Testing
 
@@ -230,6 +237,8 @@ Cliente administrador
 permite un sistema seguro y escalable.
 
 ## Despliegue
+
+https://mjapi-production-d997.up.railway.app/
 
 El backend está preparado para ser desplegado en plataformas como:
 
