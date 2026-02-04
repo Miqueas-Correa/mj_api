@@ -60,19 +60,19 @@ class Config:
     # URI de SQLAlchemy
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
-        f"?ssl_ca=&ssl_check_hostname=false"
+        # f"?ssl-mode=REQUIRED"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Configuración SSL para Aiven
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'connect_args': {
-            'ssl': {
-                'check_hostname': False,
-                'verify_mode': False
-            }
-        }
-    }
+    # SQLALCHEMY_ENGINE_OPTIONS = {
+    #     'connect_args': {
+    #         'ssl': {
+    #             'check_hostname': False,
+    #             'verify_mode': False
+    #         }
+    #     }
+    # }
 
     # Otras configuraciones de Flask
     ENV = os.getenv("FLASK_ENV", "production")
