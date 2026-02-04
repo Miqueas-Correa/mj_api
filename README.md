@@ -238,7 +238,7 @@ permite un sistema seguro y escalable.
 
 ## Despliegue
 
-https://mjapi-production-d997.up.railway.app/
+https://mj-api-8cus.onrender.com/
 
 El backend está preparado para ser desplegado en plataformas como:
 
