@@ -96,3 +96,45 @@ def crear(request):
         raise ValueError(str(e))
     except Exception as e:
         raise ValueError("Error al crear usuario: " + str(e))
+    
+def editar(id, request, es_admin=False):
+    try:
+        usuario = db.session.get(Usuario, int(id))
+        if not usuario:
+            raise ValueError("Usuario no encontrado")
+
+        # Validar unicidad de email si se está cambiando
+        if "email" in request:
+            existente = Usuario.query.filter_by(email=request["email"]).first()
+            if existente and existente.id != usuario.id:
+                raise ValueError("El email ya está registrado")
+
+        # Validar unicidad de teléfono si se está cambiando
+        if "telefono" in request:
+            existente = Usuario.query.filter_by(telefono=request["telefono"]).first()
+            if existente and existente.id != usuario.id:
+                raise ValueError("El teléfono ya está registrado")
+
+        # Validar unicidad de nombre si se está cambiando
+        if "nombre" in request:
+            existente = Usuario.query.filter_by(nombre=request["nombre"]).first()
+            if existente and existente.id != usuario.id:
+                raise ValueError("El nombre de usuario ya está registrado")
+
+        # Actualizar campos
+        for campo in ["nombre", "email", "telefono"]:
+            if campo in request:
+                setattr(usuario, campo, request[campo])
+
+        # Contraseña se maneja aparte con set_password
+        if "contrasenia" in request:
+            usuario.set_password(request["contrasenia"])
+
+        db.session.commit()
+        return UsuarioSalidaDTO.from_model(usuario).__dict__
+
+    except ValueError as e:
+        raise ValueError(str(e))
+    except Exception as e:
+        db.session.rollback()
+        raise ValueError("Error al editar usuario: " + str(e))
