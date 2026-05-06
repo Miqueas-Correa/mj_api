@@ -103,36 +103,48 @@ def editar(id, request, es_admin=False):
         if not usuario:
             raise ValueError("Usuario no encontrado")
 
+        # Validar y limpiar los datos de entrada con el DTO
+        dto = UsuarioUpdateDTO(**request)
+
         # Validar unicidad de email si se está cambiando
-        if "email" in request:
-            existente = Usuario.query.filter_by(email=request["email"]).first()
+        if dto.email is not None:
+            existente = Usuario.query.filter_by(email=dto.email).first()
             if existente and existente.id != usuario.id:
                 raise ValueError("El email ya está registrado")
 
         # Validar unicidad de teléfono si se está cambiando
-        if "telefono" in request:
-            existente = Usuario.query.filter_by(telefono=request["telefono"]).first()
+        if dto.telefono is not None:
+            # Normalizar con la misma lógica que al crear
+            dto.telefono = validar_telefono_ar(dto.telefono)
+            existente = Usuario.query.filter_by(telefono=dto.telefono).first()
             if existente and existente.id != usuario.id:
                 raise ValueError("El teléfono ya está registrado")
 
         # Validar unicidad de nombre si se está cambiando
-        if "nombre" in request:
-            existente = Usuario.query.filter_by(nombre=request["nombre"]).first()
+        if dto.nombre is not None:
+            existente = Usuario.query.filter_by(nombre=dto.nombre).first()
             if existente and existente.id != usuario.id:
                 raise ValueError("El nombre de usuario ya está registrado")
 
-        # Actualizar campos
-        for campo in ["nombre", "email", "telefono"]:
-            if campo in request:
-                setattr(usuario, campo, request[campo])
+        # Actualizar campos permitidos
+        campos = ["nombre", "email", "telefono"]
+        if es_admin:
+            campos += ["rol", "activo"]
 
-        # Contraseña se maneja aparte con set_password
-        if "contrasenia" in request:
-            usuario.set_password(request["contrasenia"])
+        for campo in campos:
+            valor = getattr(dto, campo)
+            if valor is not None:
+                setattr(usuario, campo, valor)
+
+        # Contraseña se maneja aparte
+        if dto.contrasenia is not None:
+            usuario.set_password(dto.contrasenia)
 
         db.session.commit()
         return UsuarioSalidaDTO.from_model(usuario).__dict__
 
+    except ValidationError as e:
+        raise ValueError(f"Error de validación: {e.errors()}")
     except ValueError as e:
         raise ValueError(str(e))
     except Exception as e:
