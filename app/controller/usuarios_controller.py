@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from pydantic import ValidationError
-from app.service.pedidos_service import editar
-from app.service.usuarios_service import obtener
+from app.service.usuarios_service import obtener, editar
 """
 Controlador de usuarios para la API.
 Rutas:
